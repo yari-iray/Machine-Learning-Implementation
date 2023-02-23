@@ -33,3 +33,10 @@ def FindNearestNeighbours(node, neighbours: list, k: int):
 def DistanceFaster(node1, node2) -> float:
     x = sum( [ (node1[i] - node2[i] ** 2) for i in range((len(node1))) ])
     return sqrt(x)
+
+def Load_Dataset():
+    pass
+
+
+def Main():
+    pass

@@ -5,10 +5,6 @@ import numpy as np
 import matplotlib as mlt
 import pandas as pd
 
-"""
-Yeet!
-"""
-
 
 def Distance(node1, node2) -> float:
     n: int = len(node1)

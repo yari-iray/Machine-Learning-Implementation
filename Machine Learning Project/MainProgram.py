@@ -4,7 +4,6 @@ from operator import indexOf
 import numpy as np
 import matplotlib as mlt
 import pandas as pd
-import sklearn
 
 
 def Distance(node1, node2) -> float:

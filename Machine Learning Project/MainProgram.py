@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib as mlt
 import pandas as pd
 
-DataSplit: list = [0.6, 0.2, 0.2]
+DataSplit: list = [0.6, 0.2, 0.2] #A list of the split used in terms of training, validation and test data
+K: int = 5 #temporary value, just so we have one right now
 
 def Distance(node1, node2) -> float:
     n: int = len(node1)
@@ -36,13 +37,25 @@ def DistanceFaster(node1, node2) -> float:
 
 def Load_Dataset():
     CsvData = pd.load('milknew.csv')
+    Length: int = len(CsvData) #Needed to make a good split of data
 
-    Length = len(CsvData)
-    TrainData = CsvData[0: int(Length * DataSplit[0])]
+    #The data has to be split into training, validation and test data using predefined percentages.
+    TrainData = CsvData[0: int(Length * DataSplit[0])] 
     ValidationData = CsvData[int(Length * DataSplit[0]): int(Length * DataSplit[0]) + int(Length * DataSplit[1])]
-    TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length]
+    TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length] 
+
     return TrainData, ValidationData, TestData
 
+def NormalizeData(DataSet):
+    n: int = len(DataSet.columns) #Find the columns so we know how far to iterate
+
+    for i in range(n-1): #range is n-1 because the last column does not contain numbers, but the class.
+        LowerBound: int = min(DataSet.iloc[:,i]) #Find the minimum value in the current column
+        UpperBound: int = max(DataSet.iloc[:,i]) #Find the maximum value in the current column
+
+        DataSet.iloc[:,i] = (DataSet.iloc[:,i] - LowerBound) / (UpperBound - LowerBound) #Using this function, the column will be normalized to be between 0 and 1
+    
+    return DataSet
 
 def Main():
     pass

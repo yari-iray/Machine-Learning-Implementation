@@ -41,7 +41,7 @@ def Load_Dataset():
     TrainData = CsvData[0: int(Length * DataSplit[0])]
     ValidationData = CsvData[int(Length * DataSplit[0]): int(Length * DataSplit[0]) + int(Length * DataSplit[1])]
     TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length]
-    pass
+    return TrainData, ValidationData, TestData
 
 
 def Main():

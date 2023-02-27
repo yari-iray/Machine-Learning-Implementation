@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib as mlt
 import pandas as pd
 
+DataSplit: list = [0.6, 0.2, 0.2]
 
 def Distance(node1, node2) -> float:
     n: int = len(node1)
@@ -34,6 +35,12 @@ def DistanceFaster(node1, node2) -> float:
     return sqrt(x)
 
 def Load_Dataset():
+    CsvData = pd.load('milknew.csv')
+
+    Length = len(CsvData)
+    TrainData = CsvData[0: int(Length * DataSplit[0])]
+    ValidationData = CsvData[int(Length * DataSplit[0]): int(Length * DataSplit[0]) + int(Length * DataSplit[1])]
+    TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length]
     pass
 
 

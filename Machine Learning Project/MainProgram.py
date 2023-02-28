@@ -7,6 +7,7 @@ import pandas as pd
 
 DataSplit: list = [0.6, 0.2, 0.2] #A list of the split used in terms of training, validation and test data
 K: int = 5 #temporary value, just so we have one right now
+DataSet: str = 'milknew.csv' #The dataset currently used
 
 def Distance(node1, node2) -> float:
     n: int = len(node1)
@@ -18,44 +19,49 @@ def Distance(node1, node2) -> float:
     return sqrt(x)
 
 
-def FindNearestNeighbours(node, neighbours: list, k: int):
+def FindNearestNeighbours(DataFrame, Node, k: int):
     # find and return k nearest neighbours to node
     # order the list and take k neares ones
+    NeighbourList = DataFrame #Create a separate Dataframe to store the distance to the given Node
+    NeighbourList['Distance'] = 99999 #Set the distance to a very high number at first.
 
-    #obj with 
-    distances = [Distance(node, neighbour) for neighbour in neighbours]
+    #Find all the distances to the points in the dataframe from Node.
+    for i in range(1, DataFrame.shape[0]-1):
+        NeighbourList.iloc[i,NeighbourList.shape[1]-1] = Distance(Node, DataFrame.iloc[i,:])
     
-
-    # Will rewrite to a node object with neighbours as list, 
-    # parameters is a question, maybe a list of features but could be long to implement and non-uniform
-    return distances.index(min(distances))
+    NeighbourList = NeighbourList.sort_values(by='distance', ascending=True) #Sort the dataframe by distance
+    NeighbourList = NeighbourList.iloc[0:k,:] #Keep only the k lowest distances, and return them.
+   
+    return NeighbourList
 
 
 def DistanceFaster(node1, node2) -> float:
     x = sum( [ (node1[i] - node2[i] ** 2) for i in range((len(node1))) ])
     return sqrt(x)
 
-def Load_Dataset():
-    CsvData = pd.load('milknew.csv')
-    Length: int = len(CsvData) #Needed to make a good split of data
+class Data:
+    def LoadDataset():
+        CsvData = pd.load(DataSet)
+        Length: int = len(CsvData) #Needed to make a good split of data
 
-    #The data has to be split into training, validation and test data using predefined percentages.
-    TrainData = CsvData[0: int(Length * DataSplit[0])] 
-    ValidationData = CsvData[int(Length * DataSplit[0]): int(Length * DataSplit[0]) + int(Length * DataSplit[1])]
-    TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length] 
+        #The data has to be split into training, validation and test data using predefined percentages.
+        TrainData = CsvData[0: int(Length * DataSplit[0])] 
+        ValidationData = CsvData[int(Length * DataSplit[0]): int(Length * DataSplit[0]) + int(Length * DataSplit[1])]
+        TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length] 
 
-    return TrainData, ValidationData, TestData
+        return TrainData, ValidationData, TestData
 
-def NormalizeData(DataSet):
-    n: int = len(DataSet.columns) #Find the columns so we know how far to iterate
 
-    for i in range(n-1): #range is n-1 because the last column does not contain numbers, but the class.
-        LowerBound: int = min(DataSet.iloc[:,i]) #Find the minimum value in the current column
-        UpperBound: int = max(DataSet.iloc[:,i]) #Find the maximum value in the current column
+    def NormalizeData(DataSet):
+        n: int = len(DataSet.columns) #Find the columns so we know how far to iterate
 
-        DataSet.iloc[:,i] = (DataSet.iloc[:,i] - LowerBound) / (UpperBound - LowerBound) #Using this function, the column will be normalized to be between 0 and 1
+        for i in range(n-1): #range is n-1 because the last column does not contain numbers, but the class.
+            LowerBound: int = min(DataSet.iloc[:,i]) #Find the minimum value in the current column
+            UpperBound: int = max(DataSet.iloc[:,i]) #Find the maximum value in the current column
+
+            DataSet.iloc[:,i] = (DataSet.iloc[:,i] - LowerBound) / (UpperBound - LowerBound) #Using this function, the column will be normalized to be between 0 and 1
     
-    return DataSet
+        return DataSet
 
 def Main():
     pass

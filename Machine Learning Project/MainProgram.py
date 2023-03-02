@@ -26,18 +26,37 @@ def FindNearestNeighbours(DataFrame, Node, k: int):
     NeighbourList['Distance'] = 99999 #Set the distance to a very high number at first.
 
     #Find all the distances to the points in the dataframe from Node.
-    for i in range(1, DataFrame.shape[0]-1):
+    for i in range(0, DataFrame.shape[0]):
         NeighbourList.iloc[i,NeighbourList.shape[1]-1] = Distance(Node, DataFrame.iloc[i,:])
     
     NeighbourList = NeighbourList.sort_values(by='Distance', ascending=True) #Sort the dataframe by distance
     NeighbourList = NeighbourList.iloc[0:k,:] #Keep only the k lowest distances, and return them.
-   
+    
     return NeighbourList
+
+def ClassifyNewNode(NearNeighbours, node):
+    GradeList: list = NearNeighbours.iloc[:,NearNeighbours.shape[1]-2].tolist() #Get a list of all grades (duplicates included)    
+    GradeCount: dict = {i: GradeList.count(i) for i in GradeList} #Count all occurences in the GradeList, storing them in a dictionary
+    
+    newnode = node #new node as not to alter the actual dataset
+    newnode['Distance'] = sorted(GradeCount)[0] #set the value of the node to the most common Grade found in the Neighbours
+
+    return newnode
+
+def KNN(TrainData, TestData, k: int):
+    Results = TestData
+    print(Results)
+    for i in range(0, TestData.shape[0]):
+        NN = FindNearestNeighbours(TrainData, TestData.iloc[i,:], k)
+        Results.iloc[i,:] = ClassifyNewNode(NN, TestData.iloc[i,:-1])
+
+    return Results
 
 
 def DistanceFaster(node1, node2) -> float:
     x = sum( [ (node1[i] - node2[i] ** 2) for i in range((len(node1))) ])
     return sqrt(x)
+
 
 class DataFunctions:
     def LoadDataset():
@@ -64,17 +83,17 @@ class DataFunctions:
         return DataSet
 
 def Main():
-    TrainData, ValidationData, TestData = DataFunctions.LoadDataset() #Load the data
-    TrainData = DataFunctions.NormalizeData(TrainData) #Normalize the data
+    TrainData, ValidationData, TestData = DataFunctions.LoadDataset()
+    TrainData = DataFunctions.NormalizeData(TrainData)
     ValidationData = DataFunctions.NormalizeData(ValidationData)
     TestData = DataFunctions.NormalizeData(TestData)
 
-    #Find the nearest neighbours to the first point in the validation data
-    Neighbours = FindNearestNeighbours(TrainData, ValidationData.iloc[1,:], K)
+    #print(TrainData)
+    #print(ValidationData)
+    #print(TestData)
 
-    #Find the class of the first point in the validation data
-    Class = Neighbours.iloc[0,Neighbours.shape[1]-2] #The class is the last column in the dataframe, so we take the last column and the first row.
-
-    print(Class)
+    #print(FindNearestNeighbours(TrainData, TrainData.iloc[0,:], K))
+    print(TestData)
+    print(KNN(TrainData, TestData, K))
 
 Main()

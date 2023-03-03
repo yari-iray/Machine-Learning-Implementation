@@ -1,6 +1,7 @@
 
 from math import sqrt
 from operator import indexOf
+from re import M
 import numpy as np
 import matplotlib as mlt
 import pandas as pd
@@ -96,4 +97,5 @@ def Main():
     print(TestData)
     print(KNN(TrainData, TestData, K))
 
-Main()
+if __name__ == "__main__":
+    Main()

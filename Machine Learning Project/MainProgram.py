@@ -5,9 +5,11 @@ from math import sqrt
 #import matplotlib as mlt
 import pandas as pd
 
+#DataSplit: dict = {"training": 0.4, "validation": 0.4, "test": 0.2 }
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
+#DataSplit: dict = {"training": 0.7, "validation": 0.1, "test": 0.2 }
 K: int = 5 #temporary value, just so we have one right now
-PathToDataset: str = "C:\\Users\\Yari\\OneDrive - Vrije Universiteit Amsterdam\\source\\repos\\Machine Learning Project\\Machine Learning Project\\milknew.csv"
+PathToDataset: str = "Machine Learning Project/milknew.csv"
 
 def FindNearestNeighbours(DataFrame, Node, k: int):
     # find and return k nearest neighbours to node
@@ -46,6 +48,13 @@ def Distance(node1, node2) -> float:
     x = sum( [(node1[i] - node2[i]) ** 2 for i in range((len(node1) - 1))] )
     return sqrt(x)
 
+def errorCount(ComparisonData, Results):
+    tally = 0
+    for i in range(0, Results.shape[0]):
+        if Results.iloc[i,Results.shape[1]-1] != ComparisonData.iloc[i,ComparisonData.shape[1]-1]: # Compare the algorithm's prediction to the actual grade
+            tally += 1
+
+    return tally
 
 class DataFunctions:
     def LoadDataset():
@@ -72,16 +81,29 @@ class DataFunctions:
         return DataSet
 
 def Main():
-    TrainData, ValidationData, TestData = DataFunctions.LoadDataset()
-    TrainData = DataFunctions.NormalizeData(TrainData)
-    ValidationData = DataFunctions.NormalizeData(ValidationData)
-    TestData = DataFunctions.NormalizeData(TestData)
 
-    print("Test data\n")
-    print(TestData)
+    errors = pd.DataFrame(columns = ['K','Error'])   
 
-    print("KNN\n")
-    print(KNN(TrainData, TestData, K))
+    for i in range(1,26):
+        print(f"Processing Data (K = {i})...")
 
+        TrainData, ValidationData, TestData = DataFunctions.LoadDataset()
+        TrainData = DataFunctions.NormalizeData(TrainData)
+        ValidationData = DataFunctions.NormalizeData(ValidationData)
+        TestData = DataFunctions.NormalizeData(TestData)
+        ComparisonData = ValidationData.copy()
+        Results = KNN(TrainData, ValidationData, i)
+
+        print("Validation Data\n")
+        print(ValidationData)
+
+        print("KNN\n")
+        print(Results)
+
+        errors = errors.append(pd.DataFrame([[i,errorCount(ComparisonData, Results)]], columns=['K', 'Error']))
+        print(errors)
+
+        print("Done!")
+        
 if __name__ == "__main__":
     Main()

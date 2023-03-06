@@ -1,24 +1,13 @@
-
 from math import sqrt
-from operator import indexOf
-from re import M
-import numpy as np
-import matplotlib as mlt
+#from operator import indexOf
+#from re import M
+#import numpy as np
+#import matplotlib as mlt
 import pandas as pd
 
-DataSplit: list = [0.6, 0.2, 0.2] #A list of the split used in terms of training, validation and test data
+DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 K: int = 5 #temporary value, just so we have one right now
-DataSet: str = 'Machine Learning Project/milknew.csv' #The dataset currently used
-
-def Distance(node1, node2) -> float:
-    n: int = len(node1)
-    x: float = 0
-
-    for i in range(n-1):
-        x += (node1[i] - node2[i])**2
-
-    return sqrt(x)
-
+PathToDataset: str = "C:\\Users\\Yari\\OneDrive - Vrije Universiteit Amsterdam\\source\\repos\\Machine Learning Project\\Machine Learning Project\\milknew.csv"
 
 def FindNearestNeighbours(DataFrame, Node, k: int):
     # find and return k nearest neighbours to node
@@ -46,7 +35,6 @@ def ClassifyNewNode(NearNeighbours, node):
 
 def KNN(TrainData, TestData, k: int):
     Results = TestData
-    print(Results)
     for i in range(0, TestData.shape[0]):
         NN = FindNearestNeighbours(TrainData, TestData.iloc[i,:], k)
         Results.iloc[i,:] = ClassifyNewNode(NN, TestData.iloc[i,:-1])
@@ -54,20 +42,20 @@ def KNN(TrainData, TestData, k: int):
     return Results
 
 
-def DistanceFaster(node1, node2) -> float:
-    x = sum( [ (node1[i] - node2[i] ** 2) for i in range((len(node1))) ])
+def Distance(node1, node2) -> float:
+    x = sum( [(node1[i] - node2[i]) ** 2 for i in range((len(node1) - 1))] )
     return sqrt(x)
 
 
 class DataFunctions:
     def LoadDataset():
-        CsvData = pd.read_csv(DataSet)
+        CsvData = pd.read_csv(PathToDataset)
         Length: int = len(CsvData) #Needed to make a good split of data
 
         #The data has to be split into training, validation and test data using predefined percentages.
-        TrainData = CsvData[0: int(Length * DataSplit[0])] 
-        ValidationData = CsvData[int(Length * DataSplit[0]): int(Length * DataSplit[0]) + int(Length * DataSplit[1])]
-        TestData = CsvData[int(Length * DataSplit[0]) + int(Length * DataSplit[1]): Length] 
+        TrainData = CsvData[0: int(Length * DataSplit["training"])] 
+        ValidationData = CsvData[int(Length * DataSplit["training"]): int(Length * DataSplit["training"]) + int(Length * DataSplit["validation"])]
+        TestData = CsvData[int(Length * DataSplit["training"]) + int(Length * DataSplit["validation"]): Length] 
 
         return TrainData, ValidationData, TestData
 
@@ -89,12 +77,10 @@ def Main():
     ValidationData = DataFunctions.NormalizeData(ValidationData)
     TestData = DataFunctions.NormalizeData(TestData)
 
-    #print(TrainData)
-    #print(ValidationData)
-    #print(TestData)
-
-    #print(FindNearestNeighbours(TrainData, TrainData.iloc[0,:], K))
+    print("Test data\n")
     print(TestData)
+
+    print("KNN\n")
     print(KNN(TrainData, TestData, K))
 
 if __name__ == "__main__":

@@ -73,13 +73,22 @@ class KNN:
 class NeuralNetwork:
     def Sigmoid(x: float):
         return 1 / (1 + exp(-x))
+
+    def Relu(x:float): #ReLU activation function
+        return np.maximum(0, x)
     
     def GetInputmatrix(Input):
         X = Input.iloc[:, :-1].values # get all the rows and all the columns except the last one 
         X = np.array(X)  #change the matrix into a numpy array (this will make it easier and faster to work with) 
 
         return X
-    
+
+    def GetTargetValues(Input):
+        Y = Input.iloc[:, -1].values #get the last(target) row
+        Y = np.array(Y) #change the matrid into a numpy array
+
+        return Y
+
     def GetStartWeights(Input: np.array):
         #Create a matrix of random weights of size (number of features, 1)
         #The weights are initialized to a random value between -1 and 1

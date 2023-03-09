@@ -21,7 +21,6 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Objects.py" />
     <Compile Include="MainProgram.py" />
   </ItemGroup>
   <ItemGroup>

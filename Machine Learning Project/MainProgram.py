@@ -89,14 +89,14 @@ class NeuralNetwork:
         return Weights
     
     def ComputeNeuron(Input: np.array, Weights: np.array):
-        #Compute the value of a neuron using the sigmoid function and the element wise multiplication of the input and the weights
-        print("input: ", Input)
-        print("weights: ", Weights)
+        #Make an empty array and variable, to later store the actual values of the neuron
         Neuron: np.array = np.zeros((Input.shape[0], 1))
         value: float = 0
         
-        for i in range(Input.shape[0]):
-            value = NeuralNetwork.Sigmoid(np.dot(Input[i,:], Weights))
+        #Iterate over all the rows in the input matrix (cannot do the entire matrix at once, the sigmoid does not allow for that)
+        #Compute the value of a neuron using the sigmoid function and the element wise multiplication of the input and the weights
+        for i in range(Input.shape[0]): 
+            value = NeuralNetwork.Sigmoid(np.dot(Input[i,:], Weights)) 
             Neuron[i,0] = value
 
         return Neuron

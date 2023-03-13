@@ -76,6 +76,15 @@ class NeuralNetwork:
 
     def Relu(x:float): #ReLU activation function
         return np.maximum(0, x)
+
+    def softMax(data):
+        exp_data = [np.exp(i - np.max(data)) for i in x]
+
+        sum_exp_data = sum(exp_data)
+
+        softmax_data = [i / sum_exp_data for i in exp_data]
+
+        return max(softmax_data)
     
     def GetInputmatrix(Input):
         X = Input.iloc[:, :-1].values # get all the rows and all the columns except the last one 

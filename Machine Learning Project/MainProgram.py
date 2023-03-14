@@ -195,6 +195,9 @@ class NeuralNetwork:
     def TrainNetwork():
         pass
 
+    def TestNetwork():
+        pass
+
 
 def Main():
     TrainData, ValidationData, TestData = DataFunctions.LoadDataset()

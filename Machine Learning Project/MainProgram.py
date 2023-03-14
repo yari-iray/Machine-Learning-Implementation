@@ -78,8 +78,8 @@ class NeuralNetwork:
         self.Input = NeuralNetwork.GetInputmatrix(Data)
         self.ExpectedOutput = NeuralNetwork.GetTargetValues(Data)
         self.NetworkSize = NetworkSize
-        self.Weights = NeuralNetwork.GetStartWeights(Data, NetworkSize)
-        self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self.NetworkSize, self.Input, self.Weights)
+        self.Weights = NeuralNetwork.GetStartWeights(self)
+        self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self)
 
     def GetInputmatrix(Data) -> np.array:
         X = Data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
@@ -165,13 +165,37 @@ class NeuralNetwork:
         return AllNeurons, y
 
     def BackPropagate(self):
-
+        # Define the new weights as a copy of the old weights
+        # Define the change in values for now as a copy of the neurons
+        # Compute the derivative of the loss function
         NewWeights = self.Weights.copy()
-        dy = NeuralNetwork.GetLossDerivative()
+        dValues = self.Neurons.copy()
+        dy = NeuralNetwork.GetLossDerivative(self)[-1]
+        print(dy)
 
-        for i in range(len(self.Weights)):
-            CurrentLayerNumber = len(self.Weights) - i - 1
+        # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
+        for i in range(len(self.NetworkSize)):
+            CurrentLayer = len(self.NetworkSize) - i - 1
+
+            # The new value for dValues is alway the previous dValues times the derivative of the sigmoid function of the previous layer
+            # The new value for the weights is always the previous weights minus the previous dValues times the previous layer
+            # The edge cases have to be done differently, due to the edges differing in shape from the rest of the network (the input layer has no previous layer, the output layer has no next layer)
+
+            if CurrentLayer == len(self.NetworkSize) - 1: # If the current layer is the output layer
+                dValues[-1] = dy * self.Weights[-1]
+                NewWeights[-1][0,:] = NewWeights[-1][0,:] - self.Neurons[-1][-1] * dy
             
+            elif CurrentLayer == 0: # If the current layer is the first hidden layer
+                dValues[0] = dValues[1] * NeuralNetwork.SigmoidDerivative(self.Neurons[1][-1])
+                NewWeights[0][0,:] = NewWeights[0][0,:] - dValues[0][-1] * self.Input[-1]
+
+            else: # If the current layer is another hidden layer
+                dValues[CurrentLayer] = dValues[CurrentLayer+1] * NeuralNetwork.SigmoidDerivative(self.Neurons[CurrentLayer+1][-1])
+                NewWeights[CurrentLayer][0,:] = NewWeights[CurrentLayer][0,:] - dValues[CurrentLayer][-1] * self.Neurons[CurrentLayer-1][-1]
+            
+            # print(dValues)
+
+        return NewWeights
 
 
     def TrainNetwork():
@@ -184,7 +208,16 @@ def Main():
     ValidationData = DataFunctions.NormalizeData(ValidationData)
     TestData = DataFunctions.NormalizeData(TestData)
 
-    nn1 = NeuralNetwork(TrainData, [3, 3, 3])
+    #create a neural network instance with 2 hidden layers of 1 neuron each
+    Network = NeuralNetwork(TrainData, [1,1])
+
+    print("old weights")
+    print(Network.Weights)
+
+    # print(Network.Neurons[-1])
+    #print the computed neurons
+    print("new weights")
+    print(Network.BackPropagate())
     
 
 if __name__ == "__main__":

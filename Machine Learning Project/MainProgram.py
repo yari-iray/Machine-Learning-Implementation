@@ -74,43 +74,46 @@ class KNN:
         return math.sqrt(x)
 
 class NeuralNetwork:
-    def Sigmoid(x: np.array) -> np.array:
-        return 1 / (1 + np.exp(-x))
-    
+    def __init__(self, Data: np.array, NetworkSize: list):
+        self.Input = NeuralNetwork.GetInputmatrix(Data)
+        self.ExpectedOutput = NeuralNetwork.GetTargetValues(Data)
+        self.NetworkSize = NetworkSize
+        self.Weights = NeuralNetwork.GetStartWeights(Data, NetworkSize)
+        self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self.NetworkSize, self.Input, self.Weights)
 
-    def SigmoidDerivative(x: np.array) -> np.array:
-        return NeuralNetwork.Sigmoid(x) * (1 - NeuralNetwork.Sigmoid(x))
-    
-
-    def GetLoss(y: np.array, Targets: np.array) -> np.array:
-        return np.sum((y - Targets) ** 2)
-    
-
-    def GetLossDerivative(y: np.array, Targets: np.array) -> np.array:
-        return 2 * (y - Targets)
-
-    def softMax(data):
-        exp_data = [np.exp(i - np.max(data)) for i in x] # calculate explonentials of all the data
-        sum_exp_data = sum(exp_data) # summing all the exponentials
-        softmax_data = [i / sum_exp_data for i in exp_data] #getting an array of all the probabilities.
-
-        return max(softmax_data)
-
-
-    def GetInputmatrix(Input) -> np.array:
-        X = Input.iloc[:, :-1].values # get all the rows and all the columns except the last one 
+    def GetInputmatrix(Data) -> np.array:
+        X = Data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
         X = np.array(X)  #change the matrix into a numpy array (this will make it easier and faster to work with) 
 
         return X
 
-
-    def GetTargetValues(Input) -> np.array:
-        Y = Input.iloc[:, -1].values #get the last(target) row
+    def GetTargetValues(Data) -> np.array:
+        Y = Data.iloc[:, -1].values #get the last(target) row
         Y = np.array(Y) #change the matrix into a numpy array
-
+        
         #Change the target values into numbers, so they can be used with the network
+        for i in range(0, len(Y)):
+            if Y[i] == "low":
+                Y[i] = 0
+            elif Y[i] == "medium":
+                Y[i] = 1
+            elif Y[i] == "high":
+                Y[i] = 2
 
         return Y
+    
+    def Sigmoid(x: np.array) -> np.array:
+        return 1 / (1 + np.exp(-x))
+    
+    def SigmoidDerivative(x: np.array) -> np.array:
+        return NeuralNetwork.Sigmoid(x) * (1 - NeuralNetwork.Sigmoid(x))
+    
+
+    def GetLoss(self) -> float:
+        return np.square(self.y - self.ExpectedOutput)
+
+    def GetLossDerivative(self) -> float:
+        return 2 * (self.ExpectedOutput - self.y)
 
 
     def GetLayerStartWeights(InputLayerSize: int, OutputLayerSize: int):
@@ -120,51 +123,59 @@ class NeuralNetwork:
         Weights = Weights * 2 - 1
 
         return Weights
-    
 
-    def GetStartWeights(Input: np.array, NetworkSize: list):
+    def GetStartWeights(self):
         # Inititialze the starting weights for the input layer of the network as an empty list
         # Fill that empty list with the weights for the input layer first.
         TotalWeights: list = []
-        TotalWeights.append(NeuralNetwork.GetLayerStartWeights(Input.shape[1], NetworkSize[0]))
+        TotalWeights.append(NeuralNetwork.GetLayerStartWeights(self.Input.shape[1], self.NetworkSize[0]))
 
         # Iteratively fill the weights list with the weights for the hidden layers
-        for i in range(1,len(NetworkSize)):
-            Weights: np.array = NeuralNetwork.GetLayerStartWeights(NetworkSize[i-1], NetworkSize[i])
+        for i in range(1,len(self.NetworkSize)):
+            Weights: np.array = NeuralNetwork.GetLayerStartWeights(self.NetworkSize[i-1], self.NetworkSize[i])
             TotalWeights.append(Weights)
 
         # Add the weights for the output layer
-        TotalWeights.append(NeuralNetwork.GetLayerStartWeights(NetworkSize[-1], 1))
+        TotalWeights.append(NeuralNetwork.GetLayerStartWeights(self.NetworkSize[-1], 1))
 
         return TotalWeights
 
 
-    def ComputeNeuronNetwork(NetworkSize: list, Input: np.array, Weights: list):
+    def ComputeNeuronNetwork(self):
         # Define the first (previous) layer as the input layer
         # Define the current layer as an empty array of the size of the first hidden layer
-        PreviousLayer: np.array = Input
-        CurrentLayer: np.array = np.zeros((Input.shape[0], NetworkSize[0]))
+        AllNeurons: list = []
+        PreviousLayer: np.array = self.Input.copy()
+        AllNeurons.append(PreviousLayer)
+        CurrentLayer: np.array = np.zeros((self.Input.shape[0], self.NetworkSize[0]))
 
         # For each layer, for each neuron compute the output of the neuron and store it in the current layer
         # Then, set the current layer as the previous layer and repeat the process for the next layer
-        for i in range(len(NetworkSize)):
-            for n in range(NetworkSize[i]):
-                CurrentLayer[:,n] = NeuralNetwork.Sigmoid(np.dot(PreviousLayer, Weights[i][n,:]))
+        for i in range(len(self.NetworkSize)):
+            for n in range(self.NetworkSize[i]):
+                CurrentLayer[:,n] = NeuralNetwork.Sigmoid(np.dot(PreviousLayer, self.Weights[i][n,:]))
 
+            AllNeurons.append(CurrentLayer)
             PreviousLayer = CurrentLayer.copy()
 
         # Compute the output of the network Using the final hidden layer
-        y = NeuralNetwork.Sigmoid(np.dot(CurrentLayer, Weights[-1][0,:]))
-
-        return y
+        y = NeuralNetwork.Sigmoid(np.dot(CurrentLayer, self.Weights[-1][0,:]))
 
 
-        def BackpropagateNetwork():
-            pass
+        return AllNeurons, y
+
+    def BackPropagate(self):
+
+        NewWeights = self.Weights.copy()
+        dy = NeuralNetwork.GetLossDerivative()
+
+        for i in range(len(self.Weights)):
+            CurrentLayerNumber = len(self.Weights) - i - 1
+            
 
 
-        def TrainNetwork():
-            pass
+    def TrainNetwork():
+        pass
 
 
 def Main():
@@ -173,14 +184,7 @@ def Main():
     ValidationData = DataFunctions.NormalizeData(ValidationData)
     TestData = DataFunctions.NormalizeData(TestData)
 
-    inputmatrix = NeuralNetwork.GetInputmatrix(TrainData)
-    print("Input matrix")
-    print(inputmatrix)
-    print("Starting Weights")
-    print(NeuralNetwork.GetStartWeights(inputmatrix, [3, 4, 2, 2]))
-
-    print("Computed value")
-    print(NeuralNetwork.ComputeNeuronNetwork([2,2], inputmatrix, NeuralNetwork.GetStartWeights(inputmatrix, [2,2])))
+    nn1 = NeuralNetwork(TrainData, [3, 3, 3])
     
 
 if __name__ == "__main__":

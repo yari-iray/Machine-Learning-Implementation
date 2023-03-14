@@ -79,7 +79,7 @@ class NeuralNetwork:
         self.ExpectedOutput = NeuralNetwork.GetTargetValues(Data)
         self.NetworkSize = NetworkSize
         self.Weights = NeuralNetwork.GetStartWeights(self)
-        self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self)
+        self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self, 0)
 
     def GetInputmatrix(Data) -> np.array:
         X = Data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
@@ -109,11 +109,11 @@ class NeuralNetwork:
         return NeuralNetwork.Sigmoid(x) * (1 - NeuralNetwork.Sigmoid(x))
     
 
-    def GetLoss(self) -> float:
-        return np.square(self.y - self.ExpectedOutput)
+    def GetLoss(self, i: int) -> float:
+        return np.square(self.y - self.ExpectedOutput[i])
 
-    def GetLossDerivative(self) -> float:
-        return 2 * (self.ExpectedOutput - self.y)
+    def GetLossDerivative(self, i: int) -> float:
+        return 2 * (self.ExpectedOutput[i] - self.y)
 
 
     def GetLayerStartWeights(InputLayerSize: int, OutputLayerSize: int):
@@ -141,17 +141,18 @@ class NeuralNetwork:
         return TotalWeights
 
 
-    def ComputeNeuronNetwork(self):
+    def ComputeNeuronNetwork(self, i: int):
         # Define the first (previous) layer as the input layer
         # Define the current layer as an empty array of the size of the first hidden layer
         AllNeurons: list = []
-        PreviousLayer: np.array = self.Input.copy()
+        PreviousLayer: np.array = self.Input[i].copy()
         AllNeurons.append(PreviousLayer)
-        CurrentLayer: np.array = np.zeros((self.Input.shape[0], self.NetworkSize[0]))
+        CurrentLayer: np.array = np.zeros((1, self.NetworkSize[0]))
 
         # For each layer, for each neuron compute the output of the neuron and store it in the current layer
         # Then, set the current layer as the previous layer and repeat the process for the next layer
         for i in range(len(self.NetworkSize)):
+            CurrentLayer = np.zeros((1, self.NetworkSize[i]))
             for n in range(self.NetworkSize[i]):
                 CurrentLayer[:,n] = NeuralNetwork.Sigmoid(np.dot(PreviousLayer, self.Weights[i][n,:]))
 
@@ -164,38 +165,31 @@ class NeuralNetwork:
 
         return AllNeurons, y
 
-    def BackPropagate(self):
+    def BackPropagate(self, i: int):
         # Define the new weights as a copy of the old weights
-        # Define the change in values for now as a copy of the neurons
         # Compute the derivative of the loss function
         NewWeights = self.Weights.copy()
-        dValues = self.Neurons.copy()
-        dy = NeuralNetwork.GetLossDerivative(self)[-1]
-        print(dy)
+        dy = NeuralNetwork.GetLossDerivative(self, i)
+
+        NewWeights[-1][0,:] = NewWeights[-1][0,:] - self.Neurons[-1] * dy
+        dValues = np.zeros((1, self.NetworkSize[-1]))
+        dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[-1]) * dy
+        # print(dValues)
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
-        for i in range(len(self.NetworkSize)):
-            CurrentLayer = len(self.NetworkSize) - i - 1
+        for i in reversed(range(len(self.NetworkSize))):
+            for n in range(self.NetworkSize[i]):
+                NewWeights[i][n,:] = NewWeights[i][n,:] - self.Neurons[i] * dValues[0,n]
+            # print(NewWeights[i])
 
-            # The new value for dValues is alway the previous dValues times the derivative of the sigmoid function of the previous layer
-            # The new value for the weights is always the previous weights minus the previous dValues times the previous layer
-            # The edge cases have to be done differently, due to the edges differing in shape from the rest of the network (the input layer has no previous layer, the output layer has no next layer)
-
-            if CurrentLayer == len(self.NetworkSize) - 1: # If the current layer is the output layer
-                dValues[-1] = dy * self.Weights[-1]
-                NewWeights[-1][0,:] = NewWeights[-1][0,:] - self.Neurons[-1][-1] * dy
-            
-            elif CurrentLayer == 0: # If the current layer is the first hidden layer
-                dValues[0] = dValues[1] * NeuralNetwork.SigmoidDerivative(self.Neurons[1][-1])
-                NewWeights[0][0,:] = NewWeights[0][0,:] - dValues[0][-1] * self.Input[-1]
-
-            else: # If the current layer is another hidden layer
-                dValues[CurrentLayer] = dValues[CurrentLayer+1] * NeuralNetwork.SigmoidDerivative(self.Neurons[CurrentLayer+1][-1])
-                NewWeights[CurrentLayer][0,:] = NewWeights[CurrentLayer][0,:] - dValues[CurrentLayer][-1] * self.Neurons[CurrentLayer-1][-1]
-            
+            dValues = np.zeros((1, self.NetworkSize[i]))
+            dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[i]) * dy
             # print(dValues)
 
+        
+
         return NewWeights
+
 
 
     def TrainNetwork():
@@ -209,15 +203,13 @@ def Main():
     TestData = DataFunctions.NormalizeData(TestData)
 
     #create a neural network instance with 2 hidden layers of 1 neuron each
-    Network = NeuralNetwork(TrainData, [1,1])
+    Network = NeuralNetwork(TrainData, [7,3,4,1,8,4])
 
-    print("old weights")
+
+    print('old weights')
     print(Network.Weights)
-
-    # print(Network.Neurons[-1])
-    #print the computed neurons
-    print("new weights")
-    print(Network.BackPropagate())
+    print('new weights')
+    print(Network.BackPropagate(0))
     
 
 if __name__ == "__main__":

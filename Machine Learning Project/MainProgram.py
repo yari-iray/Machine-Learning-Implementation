@@ -171,24 +171,26 @@ class NeuralNetwork:
         NewWeights = self.Weights.copy()
         dy = NeuralNetwork.GetLossDerivative(self, i)
 
+        # Compute the change in weights for the output layer
         NewWeights[-1][0,:] = NewWeights[-1][0,:] - self.Neurons[-1] * dy
+
+        # Compute the change in values for the output layer
         dValues = np.zeros((1, self.NetworkSize[-1]))
         dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[-1]) * dy
-        # print(dValues)
+
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
         for i in reversed(range(len(self.NetworkSize))):
+
+            # Compute the change in weights for the current layer, for every node separately
             for n in range(self.NetworkSize[i]):
                 NewWeights[i][n,:] = NewWeights[i][n,:] - self.Neurons[i] * dValues[0,n]
-            # print(NewWeights[i])
 
+            # Reset the change in values to the size of the next relevant layer
             dValues = np.zeros((1, self.NetworkSize[i]))
             dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[i]) * dy
-            # print(dValues)
 
-        
-
-        return NewWeights
+        self.Weights = NewWeights.copy() # Set the new weights as the useable weights
 
 
 
@@ -211,8 +213,6 @@ def Main():
 
     print('old weights')
     print(Network.Weights)
-    print('new weights')
-    print(Network.BackPropagate(0))
     
 
 if __name__ == "__main__":

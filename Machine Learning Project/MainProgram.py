@@ -5,7 +5,7 @@ import numpy as np
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 K: int = 5
-Dataset: str = "Machine Learning Project/milknew.csv"
+Dataset: str = "milknew.csv"
 np.random.seed(1)
 
 class DataFunctions:
@@ -76,7 +76,7 @@ class KNN:
 class NeuralNetwork:
     def __init__(self, Data: np.array, NetworkSize: list):
         self.Input = NeuralNetwork.GetInputmatrix(Data)
-        self.ExpectedOutput = NeuralNetwork.GetTargetValues(Data)
+        self.ExpectedOutput = NeuralNetwork.FormatTargetValues(Data)
         self.NetworkSize = NetworkSize
         self.Weights = NeuralNetwork.GetStartWeights(self)
         self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self, 0)
@@ -87,18 +87,14 @@ class NeuralNetwork:
 
         return X
 
-    def GetTargetValues(Data) -> np.array:
-        Y = Data.iloc[:, -1].values #get the last(target) row
-        Y = np.array(Y) #change the matrix into a numpy array
+    def FormatTargetValues(Data) -> np.array:
+        Y: np.ndarray = np.array(Data.iloc[:, -1].values) #change the matrix into a numpy array
         
-        #Change the target values into numbers, so they can be used with the network
-        for i in range(0, len(Y)):
-            if Y[i] == "low":
-                Y[i] = 0
-            elif Y[i] == "medium":
-                Y[i] = 1
-            elif Y[i] == "high":
-                Y[i] = 2
+        for val in Y:
+            match val:
+                case "low": val = 0
+                case "medium": val = 1
+                case "high": val = 2  
 
         return Y
     

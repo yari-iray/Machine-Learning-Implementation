@@ -5,7 +5,7 @@ import numpy as np
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 K: int = 5
-Dataset: str = "Machine Learning Project/milknew.csv"
+Dataset: str = "milknew.csv"
 np.random.seed(1)
 
 class DataFunctions:
@@ -88,7 +88,7 @@ class NeuralNetwork:
         return X
 
     def GetTargetValues(Data) -> np.array:
-        Y = Data.iloc[:, -1].values #get the last(target) row
+        Y = Data.iloc[:, -1].values #get the last(target) columns
         Y = np.array(Y) #change the matrix into a numpy array
         
         #Change the target values into numbers, so they can be used with the network
@@ -191,7 +191,6 @@ class NeuralNetwork:
             dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[i]) * dy
 
         self.Weights = NewWeights.copy() # Set the new weights as the useable weights
-
 
 
     def TrainNetwork():

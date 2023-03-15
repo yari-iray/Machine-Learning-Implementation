@@ -74,70 +74,67 @@ class KNN:
         return math.sqrt(x)
 
 class NeuralNetwork:
-    def __init__(self, Data: np.array, NetworkSize: list):
-        self.Input = NeuralNetwork.GetInputmatrix(Data)
-        self.ExpectedOutput = NeuralNetwork.FormatTargetValues(Data)
-        self.NetworkSize = NetworkSize
-        self.Weights = NeuralNetwork.GetStartWeights(self)
-        self.Neurons, self.y = NeuralNetwork.ComputeNeuronNetwork(self, 0)
+    def __init__(self, data: np.array, networkSize: list):
+        self.Input = self.PrepareInput(data)
+        self.ExpectedOutput = self.FormatTargetValues(data)
+        self.NetworkSize = networkSize
+        self.Weights = self.GetStartWeights()
+        self.Neurons, self.Output = self.ComputeNeuralNetwork(0)
 
-    def GetInputmatrix(Data) -> np.array:
-        X = Data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
+    def PrepareInput(self, data) -> np.array:
+        X = data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
         X = np.array(X)  #change the matrix into a numpy array (this will make it easier and faster to work with) 
 
         return X
 
-    def FormatTargetValues(Data) -> np.array:
-        Y: np.ndarray = np.array(Data.iloc[:, -1].values) #change the matrix into a numpy array
+    def FormatTargetValues(self, data) -> np.array:
+        #convert classes into grades
+        grades: np.ndarray = np.array(data.iloc[:, -1].values)
         
-        for val in Y:
-            match val:
-                case "low": val = 0
-                case "medium": val = 1
-                case "high": val = 2  
+        gradeNumberPairs = {"low": 0, "medium": 1, "high": 2}
+        for val in gradeNumberPairs:
+            val = grades[val]
 
-        return Y
-    
-    def Sigmoid(x: np.array) -> np.array:
-        return 1 / (1 + np.exp(-x))
-    
-    def SigmoidDerivative(x: np.array) -> np.array:
-        return NeuralNetwork.Sigmoid(x) * (1 - NeuralNetwork.Sigmoid(x))
-    
+        return grades
 
-    def GetLoss(self, i: int) -> float:
-        return np.square(self.y - self.ExpectedOutput[i])
+    def GetStartWeights(self):
+        # Inititialze the starting weights for the input layer of the network as an empty list
+        # Fill that empty list with the weights for the input layer first.
+        TotalWeights: list = []
+        TotalWeights.append(self.GetLayerStartWeights(self.Input.shape[1], self.NetworkSize[0]))
 
-    def GetLossDerivative(self, i: int) -> float:
-        return 2 * (self.ExpectedOutput[i] - self.y)
+        # Iteratively fill the weights list with the weights for the hidden layers
+        for i in range(1,len(self.NetworkSize)):
+            Weights: np.array = self.GetLayerStartWeights(self.NetworkSize[i-1], self.NetworkSize[i])
+            TotalWeights.append(Weights)
 
+        # Add the weights for the output layer
+        TotalWeights.append(self.GetLayerStartWeights(self.NetworkSize[-1], 1))
 
-    def GetLayerStartWeights(InputLayerSize: int, OutputLayerSize: int):
+        return TotalWeights
+
+    def GetLayerStartWeights(self, InputLayerSize: int, OutputLayerSize: int):
         #Create a matrix of random weights between -1 and 1
         #This matrix will have the same amount of columns as the input, and the same amount of rows as the output
         Weights = np.random.rand(OutputLayerSize, InputLayerSize)
         Weights = Weights * 2 - 1
 
         return Weights
+    
+    def Sigmoid(self, x: np.array) -> np.array:
+        return 1 / (1 + np.exp(-x))
+    
+    def SigmoidDerivative(self, x: np.array) -> np.array:
+        return self.Sigmoid(x) * (1 - self.Sigmoid(x))
+    
 
-    def GetStartWeights(self):
-        # Inititialze the starting weights for the input layer of the network as an empty list
-        # Fill that empty list with the weights for the input layer first.
-        TotalWeights: list = []
-        TotalWeights.append(NeuralNetwork.GetLayerStartWeights(self.Input.shape[1], self.NetworkSize[0]))
+    def GetLoss(self, i: int) -> float:
+        return np.square(self.Output - self.ExpectedOutput[i])
 
-        # Iteratively fill the weights list with the weights for the hidden layers
-        for i in range(1,len(self.NetworkSize)):
-            Weights: np.array = NeuralNetwork.GetLayerStartWeights(self.NetworkSize[i-1], self.NetworkSize[i])
-            TotalWeights.append(Weights)
+    def GetLossDerivative(self, i: int) -> float:
+        return 2 * (self.ExpectedOutput[i] - self.Output)
 
-        # Add the weights for the output layer
-        TotalWeights.append(NeuralNetwork.GetLayerStartWeights(self.NetworkSize[-1], 1))
-
-        return TotalWeights
-
-
-    def ComputeNeuronNetwork(self, i: int):
+    def ComputeNeuralNetwork(self, i: int):
         # Define the first (previous) layer as the input layer
         # Define the current layer as an empty array of the size of the first hidden layer
         AllNeurons: list = []
@@ -150,51 +147,60 @@ class NeuralNetwork:
         for i in range(len(self.NetworkSize)):
             CurrentLayer = np.zeros((1, self.NetworkSize[i]))
             for n in range(self.NetworkSize[i]):
-                CurrentLayer[:,n] = NeuralNetwork.Sigmoid(np.dot(PreviousLayer, self.Weights[i][n,:]))
+                CurrentLayer[:,n] = self.Sigmoid(np.dot(PreviousLayer, self.Weights[i][n,:]))
 
             AllNeurons.append(CurrentLayer)
             PreviousLayer = CurrentLayer.copy()
 
         # Compute the output of the network Using the final hidden layer
-        y = NeuralNetwork.Sigmoid(np.dot(CurrentLayer, self.Weights[-1][0,:]))
+        output = self.Sigmoid(np.dot(CurrentLayer, self.Weights[-1][0,:]))
 
-
-        return AllNeurons, y
+        return AllNeurons, output
 
     def BackPropagate(self, i: int):
         # Define the new weights as a copy of the old weights
         # Compute the derivative of the loss function
         NewWeights = self.Weights.copy()
-        dy = NeuralNetwork.GetLossDerivative(self, i)
+        dy = self.GetLossDerivative(i)
 
         # Compute the change in weights for the output layer
         NewWeights[-1][0,:] = NewWeights[-1][0,:] - self.Neurons[-1] * dy
 
         # Compute the change in values for the output layer
         dValues = np.zeros((1, self.NetworkSize[-1]))
-        dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[-1]) * dy
+        dValues = self.SigmoidDerivative(self.Neurons[-1]) * dy
 
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
-        for i in reversed(range(len(self.NetworkSize))):
+        for i in range(len(self.NetworkSize), 0):
 
             # Compute the change in weights for the current layer, for every node separately
             for n in range(self.NetworkSize[i]):
                 NewWeights[i][n,:] = NewWeights[i][n,:] - self.Neurons[i] * dValues[0,n]
 
             # Reset the change in values to the size of the next relevant layer
-            dValues = np.zeros((1, self.NetworkSize[i]))
-            dValues = NeuralNetwork.SigmoidDerivative(self.Neurons[i]) * dy
+            dValues = np.zeros((1, self.NetworkSize[i])) # is this line redundant?
+            dValues = self.SigmoidDerivative(self.Neurons[i]) * dy
 
         self.Weights = NewWeights.copy() # Set the new weights as the useable weights
 
+    def TrainNetwork(self):
+        for i in range(len(self.Input)):
+            pass
 
+    def TestNetwork(self, TestData: pd.DataFrame):
+        #change input to the input matrix
+        self.Input = self.GetInputMatrix(TestData)
+        # should not be needed, we need to store the neurons in a good way
+        # so we can 
+        errorCount = 0
 
-    def TrainNetwork():
-        pass
+        for i in range(len(self.Output)):
+            if self.Output[i] != self.ExpectedOutput[i]:
+                errorCount += 1
 
-    def TestNetwork():
-        pass
+        return errorCount
+
 
 
 def Main():
@@ -205,6 +211,7 @@ def Main():
 
     #create a neural network instance with 2 hidden layers of 1 neuron each
     Network = NeuralNetwork(TrainData, [7,3,4,1,8,4])
+
 
 
     print('old weights')

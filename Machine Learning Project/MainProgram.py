@@ -204,20 +204,15 @@ class NeuralNetwork:
         for val in testSet:
             dotProduct = np.dot(val, finalWeights)
 
-            prediction = self.SoftmaxPrediction(val)
-
-            outputValues.append(dotProduct)
-
+        predictions = Prediction(outputValues)
         errors = sum([1 for i in range(len(outputValues)) if outputValues[i] != expectedOutput[i]])
 
         return errors
 
-    def SoftmaxPrediction(self, weightedData):
-        dataMax = np.max(weightedData)
+    def Prediction(self, predictedValues: list) -> list(str):
+        numberClassPairs = {0: "low", 1: "medium", 1: "high"}
 
-        exponentData = np.exp(weightedData - dataMax)
-
-        return exponentData / exponentData.sum()
+        return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
 
     def TestCalculation(self, data: np.ndarray):
         for i in range(len(self.NetworkSize)):

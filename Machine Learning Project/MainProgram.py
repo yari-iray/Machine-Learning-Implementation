@@ -198,29 +198,27 @@ class NeuralNetwork:
         testSet = self.PrepareInput(testData)
 
         expectedOutput = self.ClassesToNumericValues(testData)
-        finalWeights = self.Weights[-1][0,:]
 
-        outputValues = []
-        for val in testSet:
-            dotProduct = np.dot(val, finalWeights)
+        outputValues = self.PredictValue(testSet)
 
         predictions = Prediction(outputValues)
         errors = sum([1 for i in range(len(outputValues)) if outputValues[i] != expectedOutput[i]])
 
         return errors
 
-    def Prediction(self, predictedValues: list) -> list(str):
+    def GetClassificationByNumericPrediction(self, predictedValues: list) -> list:
         numberClassPairs = {0: "low", 1: "medium", 1: "high"}
 
         return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
 
-    def TestCalculation(self, data: np.ndarray):
-        for i in range(len(self.NetworkSize)):
-            #init layer as zeroes
-            #don't work
-            layer = np.zeros(i)
-            for j in range(len(self.NetworkSize[i])):
-                layer = np.dot(data, self.Weights[j])
+    def PredictValue(self, data: np.ndarray):
+        result = []
+
+        for val in data:
+            result.append(np.dot(val, self.Weights[-1]))
+
+        return result
+
 
 
 def Main():

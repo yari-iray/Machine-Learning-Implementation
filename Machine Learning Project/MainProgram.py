@@ -202,14 +202,21 @@ class NeuralNetwork:
         expectedOutput = self.ClassesToNumericValues(testData)
 
         outputValues = self.PredictValue(testSet)
-
-        predictions = Prediction(outputValues)
+        outputValues = self.GetClassificationByNumericPrediction(outputValues)
+        
         errors = sum([1 for i in range(len(outputValues)) if outputValues[i] != expectedOutput[i]])
 
         return errors
 
     def GetClassificationByNumericPrediction(self, predictedValues: list) -> list:
         numberClassPairs = {0: "low", 1: "medium", 1: "high"}
+
+        # restrict range of values to prevent lookupErrors
+        for a in predictedValues:
+            if a > 3:
+                a = 3
+            elif a < 0: 
+                a = 0
 
         return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
 

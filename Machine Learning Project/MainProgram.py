@@ -96,10 +96,10 @@ class NeuralNetwork:
         #convert classes into grade numbers
         grades: np.ndarray = np.array(data.iloc[:, -1].values)
         
-        gradeNumberPairs = {"low": 0, "medium": 1, "high": 2}
-        for grade in grades:
-            grade = gradeNumberPairs[grade]
-
+        gradeNumberPairs = {'low': 0, 'medium': 1, 'high': 2}
+        for i in range(len(grades)):
+            grades[i] = gradeNumberPairs[grades[i]]
+        
         return grades
 
     def GetStartWeights(self):
@@ -188,6 +188,8 @@ class NeuralNetwork:
 
         self.Weights = newWeights.copy() # Set the new weights as the useable weights
 
+        return newWeights
+
     def TrainNetwork(self):
         for i in range(len(self.Input)):
             # train network on all inputs
@@ -230,10 +232,12 @@ def Main():
     #create a neural network instance with 2 hidden layers of 1 neuron each
     Network = NeuralNetwork(TrainData, [7,3,4,1,8,4])
 
-    Network.TestNetwork(TestData)
-
     print('old weights')
     print(Network.Weights)
+    print('new weights')
+    print(Network.BackPropagate(0))
+
+    Network.TestNetwork(TestData)
     
 
 if __name__ == "__main__":

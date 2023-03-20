@@ -201,7 +201,10 @@ class NeuralNetwork:
 
         expectedOutput = self.ClassesToNumericValues(testData)
 
-        outputValues = self.PredictValue(testSet)
+        outputValues = []
+        for i in testSet:
+            outputValues.append(self.PredictValue(i))
+
         outputValues = self.GetClassificationByNumericPrediction(outputValues)
         
         errors = sum([1 for i in range(len(outputValues)) if outputValues[i] != expectedOutput[i]])
@@ -221,12 +224,13 @@ class NeuralNetwork:
         return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
 
     def PredictValue(self, data: np.ndarray):
-        result = []
+        a = np.copy(data)
 
-        for val in data:
-            result.append(np.dot(val, self.Weights[-1]))
+        for i in range(len(self.NetworkSize)):
+            z = np.dot(a, self.Weights[i])
+            a = self.Sigmoid(z)
 
-        return result
+        return a
 
 
 

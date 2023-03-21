@@ -64,9 +64,8 @@ class NeuralNetwork:
     def ComputeNeuralNetwork(self, index: int):
         # Define the first (previous) layer as the input layer
         # Define the current layer as an empty array of the size of the first hidden layer
-        allNeurons = []
         previousLayer: np.array = self.Input[index].copy()
-        allNeurons.append(previousLayer)
+        allNeurons = [previousLayer]
         currentLayer: np.array = np.zeros((1, self.NetworkSize[0]))
 
         # For each layer, for each neuron compute the output of the neuron and store it in the current layer
@@ -84,11 +83,11 @@ class NeuralNetwork:
 
         return allNeurons, output
 
-    def BackPropagate(self, i: int):
+    def BackPropagate(self, index: int):
         # Define the new weights as a copy of the old weights
         # Compute the derivative of the loss function
         newWeights = self.Weights.copy()
-        dy = self.GetLossDerivative(i)
+        dy = self.GetLossDerivative(index)
 
         # Compute the change in weights for the output layer
         newWeights[-1][0,:] = newWeights[-1][0,:] - self.Neurons[-1] * dy
@@ -99,7 +98,7 @@ class NeuralNetwork:
 
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
-        for i in range(len(self.NetworkSize), 0):
+        for i in range(len(self.NetworkSize), 0, -1):
 
             # Compute the change in weights for the current layer, for every node separately
             for n in range(self.NetworkSize[i]):
@@ -115,21 +114,23 @@ class NeuralNetwork:
 
     def TrainNetwork(self):
         for i in range(len(self.Input)):
-            # train network on all inputs
-            # mayb save the weights in a way that is usable on the other inputs
-            pass
+            self.BackPropagate(i)
 
     def TestNetwork(self, testData: pd.DataFrame):
-        testSet: np.ndarray = self.PrepareInput(testData)
-        expectedOutput = testData.iloc[:, -1].values
-        
-        result = self.PredictValues(testSet)
+        self.TrainNetwork()
 
+        testSet: np.ndarray = self.PrepareInput(testData)
+        expectedClassifications = testData.iloc[:, -1].values
+
+        self.Input = testSet
+        self.ExpectedOutput = self.ClassesToNumericValues(testData)
+
+        result = self.PredictValues(testSet)
         outputValues = self.GetClassificationByNumericPrediction(result)
 
         errors = 0
         for i in range(len(outputValues)):
-            if expectedOutput[i] != outputValues[i]:
+            if expectedClassifications[i] != outputValues[i]:
                 errors += 1
 
         return errors
@@ -146,9 +147,7 @@ class NeuralNetwork:
 
         return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
 
-    def PredictValues(self, data: np.ndarray):
-        self.Input = data
-        
+    def PredictValues(self, data: np.ndarray):        
         result = []
         for i in range(len(data)):            
             _, output = self.ComputeNeuralNetwork(i)

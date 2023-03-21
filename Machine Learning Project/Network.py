@@ -59,7 +59,7 @@ class NeuralNetwork:
         return np.square(self.Output - self.ExpectedOutput[i])
 
     def GetLossDerivative(self, i: int) -> float:
-        return 2 * (self.ExpectedOutput[i] - self.Output)
+        return 2 * (self.ExpectedOutput[i] - self.Output[0])
 
     def ComputeNeuralNetwork(self, index: int):
         # Define the first (previous) layer as the input layer
@@ -98,7 +98,7 @@ class NeuralNetwork:
 
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
-        for i in range(len(self.NetworkSize), 0, -1):
+        for i in reversed(range(len(self.NetworkSize))):
 
             # Compute the change in weights for the current layer, for every node separately
             for n in range(self.NetworkSize[i]):
@@ -114,6 +114,7 @@ class NeuralNetwork:
 
     def TrainNetwork(self):
         for i in range(len(self.Input)):
+            _, self.Output = self.ComputeNeuralNetwork(i)
             self.BackPropagate(i)
 
     def TestNetwork(self, testData: pd.DataFrame):
@@ -139,11 +140,11 @@ class NeuralNetwork:
         numberClassPairs = {0: "low", 1: "medium", 2: "high"}
 
         # restrict range of values to prevent lookupErrors
-        for a in predictedValues:
-            if a > 3:
-                a = 3
-            elif a < 0: 
-                a = 0
+        for p in predictedValues:
+            if p > 3:
+                p = 3
+            elif p < 0: 
+                p = 0
 
         return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
 

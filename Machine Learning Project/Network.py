@@ -16,7 +16,6 @@ class NeuralNetwork:
         self.Weights = self.GetStartWeights()
 
         result = self.ComputeNeuralNetwork(0)
-
         self.Neurons = result.AllNeurons
         self.Output = result.SigmoidOutput
 
@@ -64,8 +63,7 @@ class NeuralNetwork:
     
     def SigmoidDerivative(self, x: np.ndarray) -> np.array:
         sig_x = self.Sigmoid(x)
-        return sig_x * (1 - sig_x)
-    
+        return sig_x * (1 - sig_x)    
 
     def GetLoss(self, i: int) -> float:
         return np.square(self.Output - self.ExpectedOutput[i])

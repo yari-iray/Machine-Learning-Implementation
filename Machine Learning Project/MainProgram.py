@@ -10,11 +10,6 @@ K: int = 5
 Dataset: str = "milknew.csv"
 np.random.seed(1)
 
-@dataclass
-class Prediction:
-    Class: str
-    Value: float
-
 class DataFunctions:
     def LoadDataset():
         CsvData = pd.read_csv(Dataset)
@@ -51,12 +46,23 @@ def Main():
     #create a neural network instance with 2 hidden layers of 1 neuron each
     Network = NeuralNetwork(TrainData, [7,3,4,1,8,4])
 
+
+    ##### for testing purposes only, try to see if the training data nets the same problems as the
+    ##### testdata
+    resultValuesForTrainingData = []
+    for i in range(len(Network.Input)):
+        values = Network.ComputeNeuralNetwork(i)
+
+        resultValuesForTrainingData.append(values.AbsoluteOutput)
+
+    expectedResults = Network.ExpectedOutput
+
     print('old weights')
     print(Network.Weights)
     #print('new weights')
     #print(Network.BackPropagate(0))
 
-    Network.TestNetwork(TestData)
+    #Network.TestNetwork(TestData)
 
     
 

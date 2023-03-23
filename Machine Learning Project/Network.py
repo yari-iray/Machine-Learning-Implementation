@@ -1,5 +1,12 @@
+from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+
+@dataclass
+class NeuralNetworkOutput:
+    AllNeurons: list
+    SigmoidOutput: float
+    AbsoluteOutput: float
 
 class NeuralNetwork:
     def __init__(self, data: np.array, networkSize: list):
@@ -7,7 +14,11 @@ class NeuralNetwork:
         self.ExpectedOutput = self.ClassesToNumericValues(data)
         self.NetworkSize = networkSize
         self.Weights = self.GetStartWeights()
-        self.Neurons, self.Output = self.ComputeNeuralNetwork(0)
+
+        result = self.ComputeNeuralNetwork(0)
+
+        self.Neurons = result.AllNeurons
+        self.Output = result.SigmoidOutput
 
     def PrepareInput(self, data) -> np.ndarray:
         X = data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
@@ -48,11 +59,12 @@ class NeuralNetwork:
 
         return weights * 2 - 1
     
-    def Sigmoid(self, x: np.array) -> np.array:
+    def Sigmoid(self, x: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-x))
     
-    def SigmoidDerivative(self, x: np.array) -> np.array:
-        return self.Sigmoid(x) * (1 - self.Sigmoid(x))
+    def SigmoidDerivative(self, x: np.ndarray) -> np.array:
+        sig_x = self.Sigmoid(x)
+        return sig_x * (1 - sig_x)
     
 
     def GetLoss(self, i: int) -> float:
@@ -61,7 +73,7 @@ class NeuralNetwork:
     def GetLossDerivative(self, i: int) -> float:
         return 2 * (self.ExpectedOutput[i] - self.Output[0])
 
-    def ComputeNeuralNetwork(self, index: int):
+    def ComputeNeuralNetwork(self, index: int) -> NeuralNetworkOutput:
         # Define the first (previous) layer as the input layer
         # Define the current layer as an empty array of the size of the first hidden layer
         previousLayer: np.array = self.Input[index].copy()
@@ -79,9 +91,10 @@ class NeuralNetwork:
             previousLayer = currentLayer.copy()
 
         # Compute the output of the network Using the final hidden layer
-        output = self.Sigmoid(np.dot(currentLayer, self.Weights[-1][0,:]))
+        finalLayerDotProduct = np.dot(currentLayer, self.Weights[-1][0,:])
+        output = self.Sigmoid(finalLayerDotProduct)
 
-        return allNeurons, output
+        return NeuralNetworkOutput(allNeurons, output[0], finalLayerDotProduct)
 
     def BackPropagate(self, index: int):
         # Define the new weights as a copy of the old weights
@@ -95,7 +108,6 @@ class NeuralNetwork:
         # Compute the change in values for the output layer
         dValues = np.zeros((1, self.NetworkSize[-1]))
         dValues = self.SigmoidDerivative(self.Neurons[-1]) * dy
-
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
         for i in reversed(range(len(self.NetworkSize))):
@@ -114,7 +126,9 @@ class NeuralNetwork:
 
     def TrainNetwork(self):
         for i in range(len(self.Input)):
-            _, self.Output = self.ComputeNeuralNetwork(i)
+            result = self.ComputeNeuralNetwork(i)
+            self.Output = result.AbsoluteOutput
+
             self.BackPropagate(i)
 
     def TestNetwork(self, testData: pd.DataFrame):
@@ -140,19 +154,19 @@ class NeuralNetwork:
         numberClassPairs = {0: "low", 1: "medium", 2: "high"}
 
         # restrict range of values to prevent lookupErrors
-        for p in predictedValues:
-            if p > 3:
-                p = 3
-            elif p < 0: 
-                p = 0
+        for i in range(len(predictedValues)):
+            if predictedValues[i] > 3:
+                predictedValues[i] = 3
+            elif predictedValues[i] < 0: 
+                predictedValues[i] = 0
 
-        return [numberClassPairs[round(predictedValue)] for predictedValue in predictedValues]
+        return [numberClassPairs[round(value)] for value in predictedValues]
 
     def PredictValues(self, data: np.ndarray):        
         result = []
         for i in range(len(data)):            
-            _, output = self.ComputeNeuralNetwork(i)
+            values = self.ComputeNeuralNetwork(i)
 
-            result.append(output[0])
+            result.append(values.AbsoluteOutput[0])
 
         return result

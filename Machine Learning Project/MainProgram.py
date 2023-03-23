@@ -53,8 +53,8 @@ def Main():
 
     print('old weights')
     print(Network.Weights)
-    print('new weights')
-    print(Network.BackPropagate(0))
+    #print('new weights')
+    #print(Network.BackPropagate(0))
 
     Network.TestNetwork(TestData)
 

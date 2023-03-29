@@ -4,13 +4,17 @@ import pandas as pd
 import numpy as np
 from kNN import KNN
 from Network import NeuralNetwork
+import os
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 K: int = 5
-Dataset: str = "Machine Learning Project/milknew.csv"
+
+#### die mag eruit maar voor nu een makkelijke fix
+Dataset: str = "milknew.csv" if os.environ['COMPUTERNAME'] == 'NPC-YARI' else "Machine Learning Project/milknew.csv"
 np.random.seed(1)
 
 class DataFunctions:
+    @staticmethod
     def LoadDataset():
         CsvData = pd.read_csv(Dataset)
         Length: int = len(CsvData) #needed to split the data into parts
@@ -22,8 +26,8 @@ class DataFunctions:
 
         return TrainData, ValidationData, TestData
 
-
-    def NormalizeData(DataSet):
+    @staticmethod
+    def NormalizeData(DataSet: pd.DataFrame):
         n: int = len(DataSet.columns) #Number of columns
 
         #the last column contains the grade, which doesn't need to be normalized as it is a classification and not a number
@@ -44,33 +48,12 @@ def Main():
 
 
     #create a neural network instance with 2 hidden layers of 1 neuron each
-    Network = NeuralNetwork(TrainData, [1,1])
+    Network = NeuralNetwork(TrainData, [1,1], 10)
     Network.TrainNetwork()
+
+    Network.TestNetwork(TestData)
     
-
-    # for i in range(100) :
-    #     print("iteration: " + str(i)) 
-    #     print("expected output: " + str(Network.ExpectedOutput[i]))
-    #     print("actual output: " + str(Network.Output))
-    #     Network.BackPropagate(i)
-    #     Network.ComputeNeuralNetwork(i)
-        
-
-    # print(Network.Weights)
-    # print("final Output")
-    # print(Network.Output)
-
-
-
-    # print('old weights')
-    # print(Network.Weights)
-    #print('new weights')
-    #print(Network.BackPropagate(0))
-
-    #Network.TestNetwork(TestData)
-
     
 
 if __name__ == "__main__":
     Main()
-

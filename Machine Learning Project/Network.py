@@ -1,19 +1,15 @@
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
-
-@dataclass
-class NeuralNetworkOutput:
-    AllNeurons: list
-    SigmoidOutput: float
-    AbsoluteOutput: float
+import math
 
 class NeuralNetwork:
-    def __init__(self, data: np.array, networkSize: list):
+    def __init__(self, data: np.array, networkSize: list, learningRate: int):
         self.Input = self.PrepareInput(data)
         self.ExpectedOutput = self.ClassesToNumericValues(data)
         self.NetworkSize = networkSize
         self.Weights = self.GetStartWeights()
+        self.LearningRate = learningRate
 
         self.ComputeNeuralNetwork(0)
 
@@ -70,7 +66,7 @@ class NeuralNetwork:
     def GetLossDerivative(self, i: int) -> float:
         return 2 * (self.ExpectedOutput[i] - self.Output)
 
-    def ComputeNeuralNetwork(self, index: int) -> NeuralNetworkOutput:
+    def ComputeNeuralNetwork(self, index: int):
         # Define the first (previous) layer as the input layer
         # Define the current layer as an empty array of the size of the first hidden layer
         previousLayer: np.array = self.Input[index].copy()
@@ -93,8 +89,14 @@ class NeuralNetwork:
         self.Output = self.Sigmoid(finalLayerDotProduct)
         self.Neurons = allNeurons
 
-
     def BackPropagate(self, index: int):
+        #######################
+        #######################
+        # old backprop
+        ########################
+        ########################
+
+
         # Define the new weights as a copy of the old weights
         # Compute the derivative of the loss function
         newWeights = self.Weights.copy()
@@ -112,7 +114,7 @@ class NeuralNetwork:
 
             # Compute the change in weights for the current layer, for every node separately
             for n in range(self.NetworkSize[i]):
-                newWeights[i][n,:] = newWeights[i][n,:] - self.Neurons[i] * dValues[0,n]
+                newWeights[i][n,:] = newWeights[i][n,:] - self.Neurons[i] * dValues[0,n] 
                 
 
             # Reset the change in values to the size of the next relevant layer
@@ -124,7 +126,8 @@ class NeuralNetwork:
     def TrainNetwork(self):
         for i in range(len(self.Input)):
             self.ComputeNeuralNetwork(i)
-            self.BackPropagate(i)
+            #self.BackPropagate(i)
+            self.NewBackPropagate(i)
 
     def TestNetwork(self, testData: pd.DataFrame):
         self.TrainNetwork()
@@ -150,18 +153,58 @@ class NeuralNetwork:
 
         # restrict range of values to prevent lookupErrors
         for i in range(len(predictedValues)):
-            if predictedValues[i] > 3:
-                predictedValues[i] = 3
+            if predictedValues[i] > 1:
+                predictedValues[i] = 1
             elif predictedValues[i] < 0: 
                 predictedValues[i] = 0
 
-        return [numberClassPairs[round(value)] for value in predictedValues]
+        return [numberClassPairs[round(value * 2) / 2] for value in predictedValues]
 
     def PredictValues(self, data: np.ndarray):        
         result = []
         for i in range(len(data)):            
-            values = self.ComputeNeuralNetwork(i)
+            self.ComputeNeuralNetwork(i)
 
-            result.append(values.AbsoluteOutput[0])
+            result.append(self.Output[0])
 
         return result
+
+
+    def NewBackPropagate(self, index):
+        output_error = abs(self.Output[0] - self.ExpectedOutput[index])
+        output_activation_derivative = self.SigmoidDerivative(self.Output[0])
+        output_delta = output_error * output_activation_derivative
+    
+        # Update output layer weights
+        self.Weights[-1] -= self.LearningRate * np.outer(output_delta, self.Neurons[-2].T)
+    
+        # Calculate hidden layer errors and deltas
+        hidden_errors = []
+        hidden_deltas = []
+        for i in reversed(range(len(self.NetworkSize))):
+            activation_derivative = self.SigmoidDerivative(self.Neurons[i])
+            error = np.dot(self.Weights[i].T, hidden_deltas[-1]) if hidden_deltas else output_delta
+            delta = error * activation_derivative
+            hidden_errors.append(error)
+            hidden_deltas.append(delta)
+    
+        # Reverse order of hidden errors and deltas for updating weights
+        #hidden_errors.reverse()
+        #hidden_deltas.reverse()
+    
+        # Update hidden layer weights
+        # real backprop, here we go from the 
+        for i in range(len(hidden_deltas)):
+            if i == 0:
+                input_data = self.Input[index]
+            else:
+                input_data = self.Neurons[i-1].T
+
+            #probleem hier is dat de deltas de shape 7,7 heeft, dit wil ie niet reshapen naar 7,1/1,7, waarschijnlijk zit dit hem
+            # in de loop waarbij de hidden layer erros en deltas worden berekend
+            outerProduct = np.outer(hidden_deltas[i], input_data) 
+
+            weightChange = self.LearningRate * outerProduct
+
+
+            self.Weights[i] -= weightChange 

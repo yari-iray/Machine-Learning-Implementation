@@ -15,9 +15,7 @@ class NeuralNetwork:
         self.NetworkSize = networkSize
         self.Weights = self.GetStartWeights()
 
-        result = self.ComputeNeuralNetwork(0)
-        self.Neurons = result.AllNeurons
-        self.Output = result.SigmoidOutput
+        self.ComputeNeuralNetwork(0)
 
     def PrepareInput(self, data) -> np.ndarray:
         X = data.iloc[:, :-1].values # get all the rows and all the columns except the last one 
@@ -29,7 +27,7 @@ class NeuralNetwork:
         #convert classes into grade numbers
         grades: np.ndarray = np.array(data.iloc[:, -1].values)
         
-        gradeNumberPairs = {'low': 0, 'medium': 1, 'high': 2}
+        gradeNumberPairs = {'low': 0, 'medium': 0.5, 'high': 1}
         for i in range(len(grades)):
             grades[i] = gradeNumberPairs[grades[i]]
         
@@ -59,6 +57,7 @@ class NeuralNetwork:
         return weights * 2 - 1
     
     def Sigmoid(self, x: np.ndarray) -> np.ndarray:
+        x = abs(x)
         return 1 / (1 + np.exp(-x))
     
     def SigmoidDerivative(self, x: np.ndarray) -> np.array:
@@ -69,7 +68,7 @@ class NeuralNetwork:
         return np.square(self.Output - self.ExpectedOutput[i])
 
     def GetLossDerivative(self, i: int) -> float:
-        return 2 * (self.ExpectedOutput[i] - self.Output[0])
+        return 2 * (self.ExpectedOutput[i] - self.Output)
 
     def ComputeNeuralNetwork(self, index: int) -> NeuralNetworkOutput:
         # Define the first (previous) layer as the input layer
@@ -85,14 +84,15 @@ class NeuralNetwork:
             for n in range(self.NetworkSize[i]):
                 currentLayer[:,n] = self.Sigmoid(np.dot(previousLayer, self.Weights[i][n,:]))
 
+
             allNeurons.append(currentLayer)
             previousLayer = currentLayer.copy()
 
         # Compute the output of the network Using the final hidden layer
         finalLayerDotProduct = np.dot(currentLayer, self.Weights[-1][0,:])
-        output = self.Sigmoid(finalLayerDotProduct)
+        self.Output = self.Sigmoid(finalLayerDotProduct)
+        self.Neurons = allNeurons
 
-        return NeuralNetworkOutput(allNeurons, output[0], finalLayerDotProduct)
 
     def BackPropagate(self, index: int):
         # Define the new weights as a copy of the old weights
@@ -105,7 +105,7 @@ class NeuralNetwork:
 
         # Compute the change in values for the output layer
         dValues = np.zeros((1, self.NetworkSize[-1]))
-        dValues = self.SigmoidDerivative(self.Neurons[-1]) * dy
+        dValues = self.SigmoidDerivative(self.Weights[-1]) * dy
 
         # For each layer, compute the change in values for the current layer for both the change in neuron value (to compute the new weights) and the change in weights
         for i in reversed(range(len(self.NetworkSize))):
@@ -113,6 +113,7 @@ class NeuralNetwork:
             # Compute the change in weights for the current layer, for every node separately
             for n in range(self.NetworkSize[i]):
                 newWeights[i][n,:] = newWeights[i][n,:] - self.Neurons[i] * dValues[0,n]
+                
 
             # Reset the change in values to the size of the next relevant layer
             dValues = np.zeros((1, self.NetworkSize[i])) # is this line redundant?
@@ -120,13 +121,9 @@ class NeuralNetwork:
 
         self.Weights = newWeights.copy() # Set the new weights as the useable weights
 
-        return newWeights
-
     def TrainNetwork(self):
         for i in range(len(self.Input)):
-            result = self.ComputeNeuralNetwork(i)
-            self.Output = result.AbsoluteOutput
-
+            self.ComputeNeuralNetwork(i)
             self.BackPropagate(i)
 
     def TestNetwork(self, testData: pd.DataFrame):
@@ -149,7 +146,7 @@ class NeuralNetwork:
         return errors
 
     def GetClassificationByNumericPrediction(self, predictedValues: list) -> list:
-        numberClassPairs = {0: "low", 1: "medium", 2: "high"}
+        numberClassPairs = {0: "low", 0.5: "medium", 1: "high"}
 
         # restrict range of values to prevent lookupErrors
         for i in range(len(predictedValues)):

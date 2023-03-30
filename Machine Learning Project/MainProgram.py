@@ -1,6 +1,8 @@
 import math
 import pandas as pd
 import numpy as np
+import tensorflow as tf
+from tensorflow import keras
 
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
@@ -10,7 +12,7 @@ np.random.seed(1)
 
 class DataFunctions:
     def LoadDataset():
-        CsvData = pd.read_csv(Dataset)
+        CsvData = pd.read_csv("Machine-Learning-Implementation/Machine Learning Project/milknew.csv") #
         Length: int = len(CsvData) #needed to split the data into parts
 
         #Split data into train, validation, test
@@ -225,6 +227,27 @@ class NeuralNetwork:
         return result
 
 
+class NEWralNetwork:
+    def __init__(self, TrainData: pd.DataFrame, ValidationData: pd.DataFrame):
+        self.TrainData = TrainData
+        self.ValidationData = ValidationData
+
+    def run(self):
+        model = tf.keras.Sequential([
+            tf.keras.layers.Dense(10,input_shape=(7,), activation='sigmoid'),
+            tf.keras.layers.Dense(10, activation='sigmoid'),
+            tf.keras.layers.Dense(3, activation='softmax')
+            ])
+
+        model.compile(optimizer='adam',
+                    loss='mean_squared_error',
+                    metrics=['accuracy'])
+        
+        model.fit(
+            self.TrainData.iloc[1:,:-1].values, 
+            self.TrainData.iloc[1:,-1].values, 
+            batch_size=len(self.TrainData)
+            )
 
 def Main():
     TrainData, ValidationData, TestData = DataFunctions.LoadDataset()
@@ -233,12 +256,14 @@ def Main():
     TestData = DataFunctions.NormalizeData(TestData)
 
     #create a neural network instance with 2 hidden layers of 1 neuron each
-    Network = NeuralNetwork(TrainData, [7,3,4,1,8,4])
+    #Network = NeuralNetwork(TrainData, [7,3,4,1,8,4])
 
 
-    print('old weights')
-    print(Network.Weights)
+    #print('old weights')
+    #print(Network.Weights)
     
+    Network = NEWralNetwork(TrainData, ValidationData)
+    Network.run()
 
 if __name__ == "__main__":
     Main()

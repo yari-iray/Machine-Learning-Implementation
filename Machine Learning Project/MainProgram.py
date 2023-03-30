@@ -7,12 +7,12 @@ from tensorflow import keras
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 K: int = 5
-Dataset: str = "milknew.csv"
+Dataset: str = "Machine-Learning-Implementation/Machine Learning Project/milknew.csv"
 np.random.seed(1)
 
 class DataFunctions:
     def LoadDataset():
-        CsvData = pd.read_csv("Machine-Learning-Implementation/Machine Learning Project/milknew.csv") #
+        CsvData = pd.read_csv(Dataset) #
         Length: int = len(CsvData) #needed to split the data into parts
 
         #Split data into train, validation, test
@@ -228,25 +228,36 @@ class NeuralNetwork:
 
 
 class NEWralNetwork:
-    def __init__(self, TrainData: pd.DataFrame, ValidationData: pd.DataFrame):
+    def __init__(self, TrainData, ValidationData: pd.DataFrame):
         self.TrainData = TrainData
         self.ValidationData = ValidationData
+        self.newData = self.recategoriseClasses()
+
+    def recategoriseClasses(self):
+        newData = self.TrainData.copy()
+        newData.iloc[:,-1] = newData.iloc[:,-1].replace("low", 1.0)
+        newData.iloc[:,-1] = newData.iloc[:,-1].replace("medium", 2.0)
+        newData.iloc[:,-1] = newData.iloc[:,-1].replace("high", 3.0)
+
+        return newData
 
     def run(self):
         model = tf.keras.Sequential([
-            tf.keras.layers.Dense(10,input_shape=(7,), activation='sigmoid'),
-            tf.keras.layers.Dense(10, activation='sigmoid'),
+            tf.keras.layers.Dense(2,input_shape=(1,), activation='sigmoid'),
+            tf.keras.layers.Dense(8, activation='sigmoid'),
             tf.keras.layers.Dense(3, activation='softmax')
             ])
 
+        
         model.compile(optimizer='adam',
-                    loss='mean_squared_error',
+                    loss=keras.losses.MeanSquaredError(),
                     metrics=['accuracy'])
         
         model.fit(
-            self.TrainData.iloc[1:,:-1].values, 
-            self.TrainData.iloc[1:,-1].values, 
-            batch_size=len(self.TrainData)
+            self.newData.iloc[:,0].values, 
+            self.newData.iloc[:,-1].values, 
+            batch_size=1,
+            epochs=100
             )
 
 def Main():

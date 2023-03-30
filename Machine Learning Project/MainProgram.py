@@ -8,10 +8,11 @@ import os
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 K: int = 5
+np.random.seed(1)
 
 #### die mag eruit maar voor nu een makkelijke fix
-Dataset: str = "milknew.csv" if os.environ['COMPUTERNAME'] == 'NPC-YARI' else "Machine Learning Project/milknew.csv"
-np.random.seed(1)
+Dataset: str = "milknew.csv" if os.environ['COMPUTERNAME'] == 'NPC-YARI' else "milknew.csv"
+# np.random.seed(1)
 
 class DataFunctions:
     @staticmethod
@@ -48,10 +49,18 @@ def Main():
 
 
     #create a neural network instance with 2 hidden layers of 1 neuron each
-    Network = NeuralNetwork(TrainData, [1,1], 10)
-    Network.TrainNetwork()
+    Network = NeuralNetwork(TrainData, [3,4,2,1], 0.5)
 
-    Network.TestNetwork(TestData)
+
+    Network.TrainNetwork()
+    Predicted, Actual = Network.TestNetwork(TestData)
+    Error = (Actual - Predicted) ** 2
+    print("Predicted: ", Predicted)
+    print("Actual: ", Actual)
+    print("Error: ", Error)
+    print("error average: ", np.average(Error))
+    print("weights: ", Network.Weights)
+
     
     
 

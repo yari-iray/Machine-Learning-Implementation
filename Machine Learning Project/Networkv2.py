@@ -2,21 +2,23 @@ import numpy as np
 import pandas as pd
 
 def sigmoid(z):
-    return 1.0/(1.0+np.exp(-z))
+    return 1.0/(1.0+np.exp(-z)) #define the sigmoid function
 
 def sigmoid_prime(z):
-    return sigmoid(z)*(1-sigmoid(z))
+    return sigmoid(z)*(1-sigmoid(z)) #derivative of the sigmoid function
 
 
 class Network:
     def __init__(self, layers):
-        self.num_layers = len(layers)
-        self.layers = layers
-        self.weights = [np.random.randn(y, x) for x, y in zip(layers[:-1], layers[1:])]
+        self.num_layers = len(layers) #number of layers in the network
+        self.layers = layers #list of the number of neurons in each layer
+        self.biases = [np.random.randn(y, 1) for y in layers[1:]]
+        #list of weights (in terms of a tuple). x is the neurons in the current layer, y is the neurons in the next layer.
+        self.weights = [np.random.randn(y, x) for x, y in zip(layers[:-1], layers[1:])] #weights are random in the beginning
 
     
     def feedforward(self, a):
-        for w in self.weights:
+        for w in self.weights: 
             a = sigmoid(np.dot(w, a))
         return a
 
@@ -24,7 +26,8 @@ class Network:
         if test_data is not None: n_test = len(test_data)
         n = len(training_data)
         for j in range(epochs):
-            np.random.shuffle(training_data)
+            #np.random.shuffle(training_data)
+            training_data = training_data.sample(frac=1).reset_index(drop=True)
             mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
@@ -51,7 +54,7 @@ class Network:
         activations = [x]
         zs = []
         for b, w in zip(self.biases, self.weights):
-            z = np.dot(w, activation)+b
+            z = np.dot(w, activation)+b 
             zs.append(z)
             activation = sigmoid(z)
             activations.append(activation)
@@ -75,7 +78,7 @@ class Network:
 
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
-Dataset: str = "milknew.csv"
+Dataset: str = "Machine-Learning-Implementation/Machine Learning Project/milknew.csv"
 
 class DataFunctions:
     @staticmethod

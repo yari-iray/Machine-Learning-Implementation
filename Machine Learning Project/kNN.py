@@ -1,43 +1,40 @@
 import math
 import pandas as pd
+import numpy as np
 
-class KNN:
+class kNN:
     def __init__(self, k: int):
         self.K = k
 
-    # find and return k nearest neighbours to node by ordering list and taking the k nearest ones
-    def FindNearestNeighbours(self, Data: pd.DataFrame, Node):
+    def GetNearestNeighbours(self, data: pd.DataFrame, node):
+        # calculation using the apply function is much quicker than using iloc directly
+        # due to optimization in the pd apply function
+        distances = data.iloc[:,:-1].apply(lambda row: self.Distance(row, node), axis=1)
+        neighbourList = pd.concat([data.iloc[:,:-1], distances], axis=1)
+        
+        # Rename column to distance
+        neighbourList = neighbourList.rename(columns={0: 'Distance'}).sort_values(by='Distance', ascending=True)
+        
+        return neighbourList.iloc[:self.K, :]
 
-        NeighbourList = Data #Create a separate Dataframe to store the distance to the given Node
-        NeighbourList['Distance'] = math.inf #Initialize as infinity
+    def ClassifyNewNode(self, nearestNeighbours: pd.DataFrame, node):        
+        gradeCount = nearestNeighbours.iloc[:,-2].value_counts().to_dict()
 
-        #Find all the distances to the points in the dataframe from Node.
-        for i in range(0, Data.shape[0]):
-            NeighbourList.iloc[i,NeighbourList.shape[1]-1] = self.Distance(Node, Data.iloc[i,:])
-                
-        #keep only the k lowest distances using the set K value
-        return NeighbourList.sort_values(by='Distance', ascending=True).iloc[0 : self.K, :] 
+        newNode = node.copy()
+        newNode['Distance'] = sorted(gradeCount)[0]
 
-    def ClassifyNewNode(self, NearestNeighbours: pd.DataFrame, node):
-        Grades: list = NearestNeighbours.iloc[:,NearestNeighbours.shape[1]-2].tolist() #Get a list of all grades (duplicates included)    
-        GradeCount: dict = {i: Grades.count(i) for i in Grades} #Count all occurences in the GradeList, storing them in a dictionary
+        return newNode
 
-        newnode = node #new node as not to alter the actual dataset
-        newnode['Distance'] = sorted(GradeCount)[0] #set value to most occurring grade found in the neighbours
+    def RunKNN(self, trainData: pd.DataFrame, testData: pd.DataFrame):
+        results = testData
+        for i in range(testData.shape[0]):
+            nearestNeighboursToNode = self.GetNearestNeighbours(trainData, testData.iloc[i,:])
+            results.iloc[i,:] = self.ClassifyNewNode(nearestNeighboursToNode, testData.iloc[i,:-1])
 
-        return newnode
+        return results
 
-    def KNN(self, TrainData, TestData, K):
-        Results = TestData
-        for i in range(0, TestData.shape[0]):
-            NN = self.FindNearestNeighbours(TrainData, TestData.iloc[i,:])
-            Results.iloc[i,:] = self.ClassifyNewNode(NN, TestData.iloc[i,:-1])
+    @staticmethod
+    def Distance(node1, node2) -> float:
+        x: float = np.sum([(node1[i] - node2[i]) ** 2 for i in range((len(node1) - 1))])        
 
-        return Results
-
-
-    def Distance(self, node1, node2) -> float:
-        #for all parameters in the node, square the distance between node1 and node2, sum the distance values together
-        x: float = sum([(node1[i] - node2[i]) ** 2 for i in range((len(node1) - 1))])
-
-        return math.sqrt(x)
+        return np.sqrt(x)

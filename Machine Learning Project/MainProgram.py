@@ -1,67 +1,62 @@
-from dataclasses import dataclass
-import math
 import pandas as pd
 import numpy as np
-from kNN import KNN
-from Network import NeuralNetwork
 import os
 
-DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
-K: int = 5
-np.random.seed(1)
-
-#### die mag eruit maar voor nu een makkelijke fix
-Dataset: str = "milknew.csv" if os.environ['COMPUTERNAME'] == 'NPC-YARI' else "milknew.csv"
-# np.random.seed(1)
-
-class DataFunctions:
-    @staticmethod
-    def LoadDataset():
-        CsvData = pd.read_csv(Dataset)
-        Length: int = len(CsvData) #needed to split the data into parts
-
-        #Split data into train, validation, test
-        TrainData = CsvData[0: int(Length * DataSplit["training"])] 
-        ValidationData = CsvData[int(Length * DataSplit["training"]): int(Length * DataSplit["training"]) + int(Length * DataSplit["validation"])]
-        TestData = CsvData[int(Length * DataSplit["training"]) + int(Length * DataSplit["validation"]): Length] 
-
-        return TrainData, ValidationData, TestData
-
-    @staticmethod
-    def NormalizeData(DataSet: pd.DataFrame):
-        n: int = len(DataSet.columns) #Number of columns
-
-        #the last column contains the grade, which doesn't need to be normalized as it is a classification and not a number
-        #loop over all columns and normalize them
-        for i in range(n - 1): 
-            LowerBound: int = min(DataSet.iloc[:,i]) #Column min
-            UpperBound: int = max(DataSet.iloc[:,i]) #Column max
-
-            DataSet.iloc[:,i] = (DataSet.iloc[:,i] - LowerBound) / (UpperBound - LowerBound) #Using this function, the column will be normalized to be between 0 and 1
-    
-        return DataSet
+from kNN import kNN
+from NeuralNetwork import NeuralNetwork
+from DataFunctions import DataFunctions
 
 def Main():
-    TrainData, ValidationData, TestData = DataFunctions.LoadDataset()
-    TrainData = DataFunctions.NormalizeData(TrainData)
-    ValidationData = DataFunctions.NormalizeData(ValidationData)
-    TestData = DataFunctions.NormalizeData(TestData)
+    np.random.seed(1)
+
+    ##########################################################################################
+    # Dataset: path to the dataset
+    # Datasplit: how are we going to divide the training, validation and testdata
+    # K: Hyperparameter for kNN how many neighbours we are going to use for our classification
+    ##########################################################################################
+
+    PathToDataSet: str = "milknew.csv"
+    DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
+    K: int = 5
+
+    TrainData, ValidationData, TestData = DataFunctions.InitializeDataSet(PathToDataSet, DataSplit)
+
+    RunNeuralNetwork(TrainData, TestData)
 
 
-    #create a neural network instance with 2 hidden layers of 1 neuron each
-    Network = NeuralNetwork(TrainData, [3,4,2,1], 0.5)
+def RunNeuralNetwork(TrainData: pd.DataFrame, TestData: pd.DataFrame):
+    # Create a neural network instance with 2 hidden layers, the final layer is the output layer
+    networkSize = [5,3,1,4,3,1]
+    learningRate = 0.01
+    dropoutProbability = 0.3
+    network = NeuralNetwork(TrainData, networkSize, learningRate, dropoutProbability)
 
+    network.TrainNetwork()
 
-    Network.TrainNetwork()
-    Predicted, Actual = Network.TestNetwork(TestData)
-    Error = (Actual - Predicted) ** 2
-    print("Predicted: ", Predicted)
-    print("Actual: ", Actual)
-    print("Error: ", Error)
-    print("error average: ", np.average(Error))
-    print("weights: ", Network.Weights)
+    predicted, actual = network.TestNetwork(TestData)
 
-    
+    ##########################################################################################
+    # Network evaluation
+    ##########################################################################################
+    errors = 0
+    n = len(predicted)
+    for i in range(n):
+        classification = round(predicted[i] * 2) / 2
+        if classification != actual[i]:
+            errors += 1
+
+    error = (actual - predicted) ** 2
+    print("Predicted: ", predicted)
+    print("Actual: ", actual)
+    print("Error: ", error)
+    print("error average: ", np.average(error))
+    print("weights: ", network.Weights)
+
+    print("")
+    print("")
+    print("Number of values in dataset: " + str(n))
+    print("Number of errors: " + str(errors))
+    print("Percentage errors: " + str(errors/n))
     
 
 if __name__ == "__main__":

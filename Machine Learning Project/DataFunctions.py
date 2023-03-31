@@ -1,7 +1,7 @@
 """
 Some functions to preprocess the data
-Datafunctions: convert the dataset into a dataframe
-Normalizedata: make sure all column have values between 0 and 1
+InitializeDataSet: convert the dataset into a dataframe
+Normalizedata: make sure the values in every columns are between 0 and 1
 """
 
 import pandas as pd

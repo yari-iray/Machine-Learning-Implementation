@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import os
 
 from kNN import kNN
 from NeuralNetwork import NeuralNetwork

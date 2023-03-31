@@ -10,9 +10,12 @@ def Main():
     np.random.seed(1)
 
     ##########################################################################################
+    # Params
+    #
+    #
     # Dataset: path to the dataset
     # Datasplit: how are we going to divide the training, validation and testdata
-    # K: Hyperparameter for kNN how many neighbours we are going to use for our classification
+    # K: how many neighbours we are going to use for our classification in kNN
     ##########################################################################################
 
     PathToDataSet: str = "milknew.csv"
@@ -22,6 +25,9 @@ def Main():
     TrainData, ValidationData, TestData = DataFunctions.InitializeDataSet(PathToDataSet, DataSplit)
 
     RunNeuralNetwork(TrainData, TestData)
+    RunKNearestNeighbours(TrainData, TestData, K)
+
+
 
 
 def RunNeuralNetwork(TrainData: pd.DataFrame, TestData: pd.DataFrame):
@@ -57,6 +63,13 @@ def RunNeuralNetwork(TrainData: pd.DataFrame, TestData: pd.DataFrame):
     print("Number of values in dataset: " + str(n))
     print("Number of errors: " + str(errors))
     print("Percentage errors: " + str(errors/n))
+
+def RunKNearestNeighbours(TrainData, TestData, K):
+    knn = kNN(K)
+    results = knn.RunKNN(TrainData, TestData)
+
+    print(results)
+
     
 
 if __name__ == "__main__":

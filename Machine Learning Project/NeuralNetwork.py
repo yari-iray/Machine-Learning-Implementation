@@ -32,6 +32,7 @@ class NeuralNetwork:
         self.DropoutProbability = dropoutProbability
         self.ExpectedOutputs = self.ClassesToNumericValues(data)
 
+        # Set the start weights to random values corresponding to a normal distribution
         self.GetStartWeights()
 
     def ConvertInputToNpArray(self, data) -> np.ndarray:
@@ -94,6 +95,7 @@ class NeuralNetwork:
             self.Weights[i] += self.LearningRate * self.Neurons[i].T.dot(deltas[i])
 
     def Dropout(self, x: np.ndarray) -> np.ndarray:
+        # Set random weights to zero, according to the dropout probability
         mask = np.random.binomial(1, 1 - self.DropoutProbability, size=x.shape) / (1 - self.DropoutProbability)
         return x * mask
 

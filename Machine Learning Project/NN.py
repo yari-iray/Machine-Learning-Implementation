@@ -3,39 +3,58 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-df_all = pd.read_csv('Machine-Learning-Implementation/Machine Learning Project/milknew.csv')
+DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 
-#normalize the data
-df_all.iloc[:,:-1] = (df_all.iloc[:,:-1] - df_all.iloc[:,:-1].mean()) / df_all.iloc[:,:-1].std()
+def LoadDataset():
+        CsvData = pd.read_csv('Machine-Learning-Implementation/Machine Learning Project/milknew.csv') #
+        Length: int = len(CsvData) #needed to split the data into parts
 
-#move the Grade column to the end
-cols = list(df_all)
-cols.insert(len(cols), cols.pop(cols.index('Grade')))
-df_all = df_all.loc[:, cols]
+        CsvData.iloc[:,-1] = CsvData.iloc[:,-1].map({'low':0, 'medium':1, 'high':2})
 
-#change grades low medium and high to 0 1 and 2
-df_all['Grade'] = df_all['Grade'].map({'low':0, 'medium':1, 'high':2})
+        #Split data into train, validation, test
+        TrainData = CsvData[0: int(Length * DataSplit["training"])] 
+        ValidationData = CsvData[int(Length * DataSplit["training"]): int(Length * DataSplit["training"]) + int(Length * DataSplit["validation"])]
+        TestData = CsvData[int(Length * DataSplit["training"]) + int(Length * DataSplit["validation"]): Length] 
 
-print(df_all.head())
+        for i in range(6):
+            TrainData = TrainData.append(TrainData.iloc[1:,:])
+        
+        #shuffle train data
+        TrainData = TrainData.sample(frac=1).reset_index(drop=True)
+
+        return TrainData, ValidationData, TestData
+
+
+def NormalizeData(DataSet):
+        n: int = len(DataSet.columns) #Number of columns
+
+        #the last column contains the grade, which doesn't need to be normalized as it is a classification and not a number
+        #loop over all columns and normalize them
+        for i in range(n - 1): 
+            LowerBound: int = min(DataSet.iloc[:,i]) #Column min
+            UpperBound: int = max(DataSet.iloc[:,i]) #Column max
+
+            DataSet.iloc[:,i] = (DataSet.iloc[:,i] - LowerBound) / (UpperBound - LowerBound) #Using this function, the column will be normalized to be between 0 and 1
+        
+    
+        return DataSet
+
+TrainData, ValidationData, TestData = LoadDataset()
+
+print(len(TrainData))
 
 model = tf.keras.Sequential([
             tf.keras.layers.Dense(64,input_shape=(7,), activation='softmax'),
-            tf.keras.layers.Dense(30, activation='sigmoid'),
+            tf.keras.layers.Dense(64, activation='sigmoid'),
             tf.keras.layers.Dense(3, activation='softmax')
             ])
 
-lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=1e-2,
-    decay_steps=10000,
-    decay_rate=0.9)
-optimizer = keras.optimizers.SGD(learning_rate=lr_schedule)
-
-model.compile(optimizer=optimizer,
+model.compile(optimizer='SGD',
                 loss=keras.losses.MeanSquaredError(),
                 metrics=['accuracy'])
 
 model.fit(
-        df_all.iloc[:-10,0:-1].values, 
-        df_all.iloc[:-10,-1].values, 
-        batch_size=1,
-        epochs=10)
+        TrainData.iloc[:,:-1].values, 
+        TrainData.iloc[:,-1].values, 
+        batch_size=8,
+        epochs=20)

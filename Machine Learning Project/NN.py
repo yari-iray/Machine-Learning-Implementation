@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from sklearn.neural_network import MLPClassifier
 
 DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
 
@@ -41,24 +42,38 @@ def NormalizeData(DataSet):
 
 TrainData, ValidationData, TestData = LoadDataset()
 
-print(len(TrainData))
 
-model = tf.keras.Sequential([
-            tf.keras.layers.Dense(8,input_shape=(7,), activation='relu'),
-            tf.keras.layers.Dense(16, activation='sigmoid'),
-            tf.keras.layers.Dense(16, activation='relu'),
-            tf.keras.layers.Dense(16, activation='sigmoid'),
-            tf.keras.layers.Dense(16, activation='relu'),
-            tf.keras.layers.Dense(16, activation='sigmoid'),
-            tf.keras.layers.Dense(3, activation='softmax')
-            ])
+def tfNN(TrainData):
+        model = tf.keras.Sequential([
+                tf.keras.layers.Dense(3,input_shape=(7,), activation='sigmoid'),
+                tf.keras.layers.Dense(5, activation='sigmoid'),
+                tf.keras.layers.Dense(7, activation='sigmoid'),
+                tf.keras.layers.Dense(5, activation='sigmoid'),
+                tf.keras.layers.Dense(3, activation='softmax')
+                ])
 
-model.compile(optimizer='adam',
-                loss=keras.losses.MeanSquaredError(),
-                metrics=['accuracy'])
+        model.compile(optimizer='adam',
+                        loss=keras.losses.MeanAbsoluteError(),
+                        metrics=['accuracy'])
+        
+        model.fit(
+                TrainData.iloc[:,:-1].values, 
+                TrainData.iloc[:,-1].values, 
+                batch_size=64,
+                epochs=10)
+        
+        model.evaluate(TestData.iloc[:,:-1].values, TestData.iloc[:,-1].values, verbose=2)
 
-model.fit(
-        TrainData.iloc[:,:-1].values, 
-        TrainData.iloc[:,-1].values, 
-        batch_size=8,
-        epochs=20)
+def skNN(TrainData):
+      X = [[0.,0.], [1.,1.]]
+      y = [0, 1]
+      clf = MLPClassifier(solver='lbfgs',
+                           alpha=1e-5, 
+                           hidden_layer_sizes=(5, 2), 
+                           random_state=1)
+      clf.fit(X, y)
+
+      clf.predict([[2., 2.], [-1., -2.]])
+
+tfNN(TrainData)
+

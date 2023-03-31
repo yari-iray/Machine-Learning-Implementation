@@ -21,7 +21,14 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DataFunctions.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kNN.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MainProgram.py" />
+    <Compile Include="NeuralNetwork.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="milknew.csv" />

@@ -9,7 +9,7 @@ def LoadDataset():
         CsvData = pd.read_csv('Machine-Learning-Implementation/Machine Learning Project/milknew.csv') #
         Length: int = len(CsvData) #needed to split the data into parts
 
-        CsvData.iloc[:,-1] = CsvData.iloc[:,-1].map({'low':0, 'medium':1, 'high':2})
+        CsvData.iloc[:,-1] = CsvData.iloc[:,-1].map({'low':0.0, 'medium':0.5, 'high':1.0})
 
         #Split data into train, validation, test
         TrainData = CsvData[0: int(Length * DataSplit["training"])] 

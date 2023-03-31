@@ -69,7 +69,6 @@ class NeuralNetwork:
             neurons.append(self.Sigmoid(np.dot(neurons[i], self.Weights[i])))
         
         self.Output = neurons[-1]
-        self.ExpectedOutput = self.Input[row]
         self.Neurons = neurons
 
 
@@ -86,13 +85,14 @@ class NeuralNetwork:
             self.Weights[i] += self.LearningRate * self.Neurons[i].T.dot(deltas[i])
 
 
+
     def TrainNetwork(self):
-        for i in range (1000):
             for i in range(len(self.Input)):
                 self.ComputeNeuralNetwork(i)
                 self.BackPropagate()
 
     def TestNetwork(self, testData: pd.DataFrame):
+        self.Input = self.PrepareInput(testData)
         ExpectedOutput = self.ClassesToNumericValues(testData)
         Input = self.PrepareInput(testData)
         PredictedOutput = np.array([])
@@ -103,4 +103,25 @@ class NeuralNetwork:
         return PredictedOutput, ExpectedOutput
 
     def GetClassificationByNumericPrediction(self, predictedValues: list) -> list:
-        pass
+        #round all values in the predictedValues list to the nearest 0.5, between 0 and 1
+        for i in range(len(predictedValues)):
+            predictedValues[i] = round(predictedValues[i] * 2) / 2
+            if predictedValues[i] > 1:
+                predictedValues[i] = 1
+            elif predictedValues[i] < 0:
+                predictedValues[i] = 0
+        
+        #convert the numeric values into classes
+        numericValueToClass = {0: 'low', 0.5: 'medium', 1: 'high'}
+        for i in range(len(predictedValues)):
+            predictedValues[i] = numericValueToClass[predictedValues[i]]
+        
+    def getclassfromnum(self, num):
+        #round to nearest half, and make sure it's between 0 and 1
+        num = round(num * 2) / 2
+        if num > 1:
+            num = 1
+        elif num < 0:
+            num = 0
+        numericValueToClass = {0: 'low', 0.5: 'medium', 1: 'high'}
+        return numericValueToClass[num]

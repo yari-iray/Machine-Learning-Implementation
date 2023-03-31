@@ -12,6 +12,7 @@ class Network:
     def __init__(self, layers):
         self.num_layers = len(layers)
         self.layers = layers
+        self.biases = [np.random.randn(y, 1) for y in layers[1:]]
         self.weights = [np.random.randn(y, x) for x, y in zip(layers[:-1], layers[1:])]
 
     

@@ -18,7 +18,7 @@ def Main():
     # K: how many neighbours we are going to use for our classification in kNN
     ##########################################################################################
 
-    PathToDataSet: str = "milknew.csv"
+    PathToDataSet: str = "Machine Learning Project/milknew.csv"
     DataSplit: dict = {"training": 0.6, "validation": 0.2, "test": 0.2 }
     K: int = 5
 

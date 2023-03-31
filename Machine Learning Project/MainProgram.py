@@ -243,7 +243,12 @@ class NEWralNetwork:
 
     def run(self):
         model = tf.keras.Sequential([
-            tf.keras.layers.Dense(2,input_shape=(1,), activation='sigmoid'),
+            tf.keras.layers.Dense(7,input_shape=(7,), activation='sigmoid'),
+            tf.keras.layers.Dense(8, activation='sigmoid'),
+            tf.keras.layers.Dense(8, activation='sigmoid'),
+            tf.keras.layers.Dense(8, activation='sigmoid'),
+            tf.keras.layers.Dense(8, activation='sigmoid'),
+            tf.keras.layers.Dense(8, activation='sigmoid'),
             tf.keras.layers.Dense(8, activation='sigmoid'),
             tf.keras.layers.Dense(3, activation='softmax')
             ])
@@ -254,10 +259,10 @@ class NEWralNetwork:
                     metrics=['accuracy'])
         
         model.fit(
-            self.newData.iloc[:,0].values, 
+            self.newData.iloc[:,0:-1].values, 
             self.newData.iloc[:,-1].values, 
-            batch_size=1,
-            epochs=100
+            batch_size=2,
+            epochs=10
             )
 
 def Main():

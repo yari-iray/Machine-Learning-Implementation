@@ -44,12 +44,16 @@ TrainData, ValidationData, TestData = LoadDataset()
 print(len(TrainData))
 
 model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64,input_shape=(7,), activation='softmax'),
-            tf.keras.layers.Dense(64, activation='sigmoid'),
+            tf.keras.layers.Dense(8,input_shape=(7,), activation='relu'),
+            tf.keras.layers.Dense(16, activation='sigmoid'),
+            tf.keras.layers.Dense(16, activation='relu'),
+            tf.keras.layers.Dense(16, activation='sigmoid'),
+            tf.keras.layers.Dense(16, activation='relu'),
+            tf.keras.layers.Dense(16, activation='sigmoid'),
             tf.keras.layers.Dense(3, activation='softmax')
             ])
 
-model.compile(optimizer='SGD',
+model.compile(optimizer='adam',
                 loss=keras.losses.MeanSquaredError(),
                 metrics=['accuracy'])
 
